@@ -3,7 +3,6 @@ from sqlalchemy import select, update
 from db.database import SessionLocal
 from db.models import Wage
 
-
 def get_wages_for_draw(user_number):
     """Getting wages from db for selected user. Returning list of wages."""
     db = SessionLocal()
@@ -12,6 +11,7 @@ def get_wages_for_draw(user_number):
     for wage in wages:
         wage_list.append((wage.flash_num, wage.score))
     print(wage_list)
+    db.close()
     return wage_list
 
 def update_wages(user_number, flash_number, wage_change):

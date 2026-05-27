@@ -34,17 +34,20 @@ def get_all_users():
     db = SessionLocal()
     users = db.scalars(select(User)).all()
     print(users)
+    db.close()
 
 def get_user(log_login):
     """Getting one user from based ont its login"""
     db = SessionLocal()
     user = db.scalars(select(User).filter_by(login = log_login)).first()
+    db.close()
     return user
 
 def login(log_login, log_password):
     """Login function, returning user data if provided login and password are correct."""
     db = SessionLocal()
     user = db.scalars(select(User).filter_by(login = log_login, password = log_password)).first()
+    db.close()
     return user
 
 def change_settings(log_login, cs_flash_amount, cs_new_flash_amount):

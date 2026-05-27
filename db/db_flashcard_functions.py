@@ -34,11 +34,13 @@ def get_all_flashcards():
     db = SessionLocal()
     flashcards = db.scalars(select(Flashcard)).all()
     print(flashcards)
+    db.close()
 
 def get_flashcard(flashcard_number):
     """Getting one flashcard from db based on its number"""
     db = SessionLocal()
-    flashcard = db.scalars(select(Flashcard).filter_by(flash_num = flashcard_number)).first()    
+    flashcard = db.scalars(select(Flashcard).filter_by(flash_num = flashcard_number)).first()
+    db.close()
     return flashcard
 
 # create_flashcard('szafa','drawer','everyday objects')

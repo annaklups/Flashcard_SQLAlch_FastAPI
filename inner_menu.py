@@ -1,7 +1,8 @@
 from gen_classes import ChoiceInner
 from gen_functions import repeat_function
-from flashcard_functions import input_new_user, learning
+from flashcard_functions import input_new_user
 from db.db_user_functions import change_settings, change_password, delete_user
+from services.flashcard_service import FlashService
 
 
 def inner_menu_func(login_data):
@@ -69,7 +70,9 @@ def inner_menu_func(login_data):
     
     # 4. learning
     elif user_choice == ChoiceInner.learning:
-        repeat_function(learning, 'Do you want to continue learning?', login_data)
+        # repeat_function(learning, 'Do you want to continue learning?', login_data)
+        flash_service = FlashService()
+        repeat_function(flash_service.learning, 'Do you want to continue learning?', login_data)        
         return False      
 
     # 5. go back to main menu
