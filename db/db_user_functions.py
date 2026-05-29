@@ -1,8 +1,8 @@
 from sqlalchemy import select, update
 from sqlalchemy.orm.session import Session
+from fastapi import HTTPException, status
 
-from db.database import SessionLocal
-from db.models import DbUser
+from db.models import DbUser, DbFlashcard, DbWage
 from schemas import UserBase
 
 def create_user(db: Session, request: UserBase):
@@ -15,32 +15,57 @@ def create_user(db: Session, request: UserBase):
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
-    # user = db.scalars(select(User).filter_by(login = newu_login)).first()
-    # flashcards = db.scalars(select(Flashcard)).all()
-    # for flash in flashcards:
-    #     wage = Wage(
-    #         user_num = user.user_num,
-    #         flash_num = flash.flash_num,
-    #         score = 5)
-    #     db.add(wage)
-    print(f"User {new_user.login} added to db")
+    user = db.scalars(select(DbUser).filter_by(login = request.login)).first()
+    flashcards = db.scalars(select(DbFlashcard)).all()
+    for flash in flashcards:
+        wage = DbWage(
+            user_num = user.user_num,
+            flash_num = flash.flash_num,
+            score = 5)
+        db.add(wage)
+    db.commit()
     return new_user 
-    # print(f"User with {newu_login} exist in database already")
+
+def get_all_users(db: Session):
+    """Getting all users data from db"""
+    return db.scalars(select(DbUser)).all()
+
+def get_user(db: Session, user_num: int):
+    """Getting one user from based ont its login"""
+    user = db.scalars(select(DbUser).filter_by(user_num = user_num)).first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"User with user_num {user_num} not found")
+    return user
+
+def update_user_settings(db: Session, user_num: int, request: UserBase):
+    """Changing number of new and old flashcard to provided values for selected user"""
+    db.execute(update(DbUser).where(DbUser.user_num == user_num).values(
+        flash_amount=request.flash_amount, 
+        new_flash_amount=request.new_flash_amount))
+    db.commit()
+    return 'ok'
+
+def delete_user(db: Session, user_num: int):
+    """Deleting user and all its data from db"""
+    user = db.scalars(select(DbUser).filter_by(user_num = user_num)).first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"User with user_num {user_num} not found")
+    db.delete(user)
+    db.commit()
+    return "ok"
 
 
-# def get_all_users():
-#     """Getting all users data from db and printing it"""
-#     db = SessionLocal()
-#     users = db.scalars(select(User)).all()
-#     print(users)
-#     db.close()
 
-# def get_user(log_login):
-#     """Getting one user from based ont its login"""
-#     db = SessionLocal()
-#     user = db.scalars(select(User).filter_by(login = log_login)).first()
-#     db.close()
-#     return user
+# def update_user_password(db: Session, user_num: int, request: UserBase):
+#     """Changing number of new and old flashcard to provided values for selected user"""
+#     db.execute(update(DbUser).where(DbUser.login == request.login).values(
+#         flash_amount=request.flash_amount, 
+#         new_flash_amount=request.new_flash_amount))
+#     db.commit()
+#     return 'ok'
+
 
 # def login(log_login, log_password):
 #     """Login function, returning user data if provided login and password are correct."""
@@ -49,33 +74,7 @@ def create_user(db: Session, request: UserBase):
 #     db.close()
 #     return user
 
-# def change_settings(log_login, cs_flash_amount, cs_new_flash_amount):
-#     """Changing number of new and old flashcard to provided values for selected user"""
-#     try:
-#         db = SessionLocal()
-#         db.execute(update(User).where(User.login == log_login).values(
-#             flash_amount=cs_flash_amount, 
-#             new_flash_amount=cs_new_flash_amount
-#             ))
-#         db.commit()
-#         print("Settings changed correctly")
-#     except:
-#         print("Error occured during changing settings")
-#     finally:
-#         db.close()
 
-# def delete_user(log_login):
-#     """Deleting user and all its data from db"""
-#     try:
-#         db = SessionLocal()
-#         user = db.scalars(select(User).filter_by(login = log_login)).first()
-#         db.delete(user)
-#         db.commit()
-#         print(f"User {log_login} delete from database")
-#     except:
-#         print("Error occured during deleting user process")
-#     finally:
-#         db.close()
 
 # def change_password(log_login, new_password1):
 #     """Changing password to new one for provided user."""
@@ -88,13 +87,3 @@ def create_user(db: Session, request: UserBase):
 #         print("Error occured during changing password")
 #     finally:
 #         db.close()
-
-
-# create_user('ania1','pass', 9, 3)
-# get_all_users()
-# get_user('AniaK')
-# get_user("buba")
-# login('AniaK', 'Qwerty1')
-# change_settings('ania1', 8, 3)
-# change_password('AniaK', 'Qwerty1')
-# delete_user('aniaa3456')

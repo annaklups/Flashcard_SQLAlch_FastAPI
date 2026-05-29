@@ -1,48 +1,49 @@
-# from sqlalchemy import select
+from sqlalchemy import select
+from sqlalchemy.orm.session import Session
+from fastapi import HTTPException, status
 
-# from db.database import SessionLocal
-# from db.models import Flashcard, User, Wage
+from db.models import DbFlashcard, DbUser, DbWage
+from schemas import FlashcardBase
 
-# def create_flashcard(newf_pol, newf_translate, newf_topic):
-#     """Creating new flashcard. Updating wage tabel with new flashcard number"""
-#     db = SessionLocal()
-#     try:
-#         flashcard = Flashcard(
-#             pol = newf_pol,
-#             translate = newf_translate,
-#             topic = newf_topic
-#         )
-#         db.add(flashcard)
-#         db.commit()
-#         flashcard = db.scalars(select(Flashcard).filter_by(pol = newf_pol)).first()  
-#         users = db.scalars(select(User)).all()
-#         for user in users:
-#             wage = Wage(
-#                 user_num = user.user_num,
-#                 flash_num = flashcard.flash_num,
-#                 score=5)
-#             db.add(wage)            
-#         db.commit()
-#         print(f"Flashcard {flashcard.flash_num}: {flashcard.pol} added to database")        
-#     except:
-#         print(f"Flashcard with {newf_pol} word exist in database already")
-#     finally:
-#         db.close()
+def create_flashcard(db: Session, request: FlashcardBase):
+    """Creating new flashcard. Updating wage tabel with new flashcard number"""
+    new_flashcard = DbFlashcard(
+        pol = request.pol,
+        translate = request.translate,
+        topic = request.topic
+    )
+    db.add(new_flashcard)
+    db.commit()
+    db.refresh(new_flashcard)
+    flashcard = db.scalars(select(DbFlashcard).filter_by(pol = request.pol)).first()  
+    users = db.scalars(select(DbUser)).all()
+    for user in users:
+        wage = DbWage(
+            user_num = user.user_num,
+            flash_num = flashcard.flash_num,
+            score=5)
+        db.add(wage)
+    db.commit()
+    return new_flashcard
 
-# def get_all_flashcards():
-#     """Getting all flashcards from db and printing it"""
-#     db = SessionLocal()
-#     flashcards = db.scalars(select(Flashcard)).all()
-#     print(flashcards)
-#     db.close()
+def get_all_flashcards(db: Session):
+    """Getting all flashcards from db"""
+    return db.scalars(select(DbFlashcard)).all()
 
-# def get_flashcard(flashcard_number):
-#     """Getting one flashcard from db based on its number"""
-#     db = SessionLocal()
-#     flashcard = db.scalars(select(Flashcard).filter_by(flash_num = flashcard_number)).first()
-#     db.close()
-#     return flashcard
+def get_flashcard(db: Session, flash_num: int):
+    """Getting one flashcard from db based on its number"""
+    flashcard = db.scalars(select(DbFlashcard).filter_by(flash_num = flash_num)).first()
+    if not flashcard:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Flashcard with flash_num {flash_num} not found")
+    return flashcard
 
-# # create_flashcard('szafa','drawer','everyday objects')
-# # get_all_flashcards()
-# # get_flashcard(1)
+def delete_flashcard(db:Session, flash_num: int):
+    """Deleting flashcard and all its data from db"""
+    flashcard = db.scalars(select(DbFlashcard).filter_by(flash_num = flash_num)).first()
+    if not flashcard:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Flashcard with flash_num {flash_num} not found")
+    db.delete(flashcard)
+    db.commit()
+    return "ok"   

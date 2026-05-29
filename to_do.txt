@@ -1,0 +1,5 @@
+- add hashing to Password
+- add http exception raise while when unique constraints failed (adding the same login od flashcard to db)
+- add authentication and loggin in module
+- figure out how implement learing module
+
