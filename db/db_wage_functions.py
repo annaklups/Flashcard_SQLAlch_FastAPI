@@ -1,30 +1,21 @@
-# from sqlalchemy import select, update
+from sqlalchemy import select, update
+from sqlalchemy.orm.session import Session
+from schemas import AnswerBase
 
-# from db.database import SessionLocal
-# from db.models import Wage
+from db.models import DbWage
 
-# def get_wages_for_draw(user_number):
-#     """Getting wages from db for selected user. Returning list of wages."""
-#     db = SessionLocal()
-#     wages = db.scalars(select(Wage).filter_by(user_num = user_number))
-#     wage_list = []
-#     for wage in wages:
-#         wage_list.append((wage.flash_num, wage.score))
-#     print(wage_list)
-#     db.close()
-#     return wage_list
+def get_wages_for_draw(db: Session, user_num: int):
+    """Getting wages from db for selected user. Returning list of wages."""
+    wages = db.scalars(select(DbWage).filter_by(user_num = user_num))
+    wage_list = []
+    for wage in wages:
+        wage_list.append((wage.flash_num, wage.score))
+    return wage_list
 
-# def update_wages(user_number, flash_number, wage_change):
-#     """Updating wage for selected user and flashcard with provided wage change"""
-#     try:
-#         db = SessionLocal()
-#         wage_to_update = db.scalars(select(Wage).filter_by(user_num = user_number, flash_num = flash_number)).first()
-#         new_wage = wage_to_update.score + wage_change
-#         db.execute(update(Wage).where(Wage.user_num == user_number, Wage.flash_num == flash_number).values(score = new_wage))
-#         db.commit()
-#     except:
-#         print("Error with wage updated occured")
-#     finally:
-#         db.close()
-
-# # get_wages_for_draw(1)
+def update_wages(db: Session, request: AnswerBase, wage_change: int):
+    """Updating wage for selected user and flashcard with provided wage change"""
+    wage_to_update = db.scalars(select(DbWage).filter_by(user_num = request.user_num , flash_num = request.flash_num)).first()
+    new_wage = wage_to_update.score + wage_change
+    db.execute(update(DbWage).where(DbWage.user_num == request.user_num, DbWage.flash_num == request.flash_num).values(score = new_wage))
+    db.commit()
+    return {'flash_num': request.flash_num, 'translate': request.answer, 'pol': request.pol, 'wage_change': wage_change}

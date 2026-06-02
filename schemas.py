@@ -35,4 +35,24 @@ class FlashcardDisplay(BaseModel):
     topic: str
     wages_flash: List[Wages]
     class Config():
-        orm_mode = True        
+        orm_mode = True
+
+# Classes for learning requests and responses
+class LearningDisplay(BaseModel):
+    pol: str
+    translate: str
+    topic: str
+    class Config():
+        orm_mode = True
+
+class AnswerBase(BaseModel):
+    flash_num: int
+    pol: str
+    answer: str
+    user_num: int
+
+class AnswerDisplay(BaseModel):
+    flash_num: int
+    translate: str
+    pol: str
+    wage_change: int

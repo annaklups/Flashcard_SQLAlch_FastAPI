@@ -4,7 +4,7 @@
 from fastapi import FastAPI
 # from csv import reader
 
-from router import user, flashcard
+from router import user, flashcard, learning
 from db import models
 
 from db.database import engine
@@ -15,7 +15,7 @@ app = FastAPI()
 
 app.include_router(user.router)
 app.include_router(flashcard.router)
-
+app.include_router(learning.router)
 
 @app.get('/')
 def start():
