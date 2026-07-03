@@ -1,2 +1,5 @@
 __pycache__/
 env/
+services/__pycache__/
+router/__pycache__/
+db/__pycache__/

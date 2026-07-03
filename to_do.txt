@@ -1,5 +1,6 @@
 - add hashing to Password
-- add http exception raise while when unique constraints failed (adding the same login od flashcard to db)
+- add http exception raise while when unique constraints failed (adding the same login or flashcard to db)
 - add authentication and loggin in module
+- add middleware (for future React frontend app)
 - figure out how implement learing module
-
+- create basic assert test to check the outcome automatically

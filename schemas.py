@@ -42,6 +42,7 @@ class LearningDisplay(BaseModel):
     pol: str
     translate: str
     topic: str
+    flash_num: int
     class Config():
         orm_mode = True
 
