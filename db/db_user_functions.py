@@ -7,6 +7,13 @@ from schemas import UserBase
 
 def create_user(db: Session, request: UserBase):
     """Creating user and adding user to db. Adding base wages to db for this user"""
+    if request.flash_amount < 1 or request.new_flash_amount < 1 or request.flash_amount < request.new_flash_amount:
+        raise HTTPException(status_code=status.HTTP_416_RANGE_NOT_SATISFIABLE,
+            detail=f"Number of flashcard is incorrect. Numbers must be higher than 0 and total amount of flashcard must be higher than new ones.")
+    existing_user = db.scalars(select(DbUser).filter_by(login = request.login)).first()
+    if existing_user:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT,
+            detail=f"User with login {request.login} exist already in database")
     new_user = DbUser(
         login = request.login, 
         password = request.password, 
@@ -40,9 +47,13 @@ def get_user(db: Session, user_num: int):
 
 def update_user_settings(db: Session, user_num: int, request: UserBase):
     """Changing number of new and old flashcard to provided values for selected user"""
+    user = db.scalars(select(DbUser).filter_by(user_num = user_num)).first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"User with user_num {user_num} not found")
     db.execute(update(DbUser).where(DbUser.user_num == user_num).values(
         flash_amount=request.flash_amount, 
-        new_flash_amount=request.new_flash_amount))
+        new_flash_amount=request.new_flash_amount))      
     db.commit()
     return 'ok'
 

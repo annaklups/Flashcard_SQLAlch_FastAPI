@@ -1,7 +1,6 @@
 from sqlalchemy.orm import Session
 from random import choices
 
-from db.db_flashcard_functions import get_flashcard
 from db import db_wage_functions, db_flashcard_functions
 from schemas import AnswerBase
 

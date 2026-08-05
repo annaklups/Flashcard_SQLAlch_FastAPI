@@ -3,6 +3,8 @@ from typing import List
 
 # Wages class for UserDisplay and FlashcardDisplay
 class Wages(BaseModel):
+    user_num: int
+    flash_num: int
     score: int
     class Config():
         orm_mode = True
@@ -15,6 +17,7 @@ class UserBase(BaseModel):
     new_flash_amount: int
 
 class UserDisplay(BaseModel):
+    user_num: int
     login: str
     password: str
     flash_amount: int
@@ -30,6 +33,7 @@ class FlashcardBase(BaseModel):
     topic: str
 
 class FlashcardDisplay(BaseModel):
+    flash_num: int
     pol: str
     translate: str
     topic: str

@@ -3,3 +3,4 @@ env/
 services/__pycache__/
 router/__pycache__/
 db/__pycache__/
+fastapi-venv/

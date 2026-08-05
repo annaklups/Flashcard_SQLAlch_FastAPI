@@ -7,6 +7,10 @@ from schemas import FlashcardBase
 
 def create_flashcard(db: Session, request: FlashcardBase):
     """Creating new flashcard. Updating wage tabel with new flashcard number"""
+    existing_flash = db.scalars(select(DbFlashcard).filter_by(pol = request.pol, translate = request.translate)).first()
+    if existing_flash:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT,
+            detail=f"Flashcard with this word {request.pol} and translation {request.translate} exist already in database")
     new_flashcard = DbFlashcard(
         pol = request.pol,
         translate = request.translate,
