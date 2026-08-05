@@ -7,9 +7,6 @@ from schemas import UserBase
 
 def create_user(db: Session, request: UserBase):
     """Creating user and adding user to db. Adding base wages to db for this user"""
-    if request.flash_amount < 1 or request.new_flash_amount < 1 or request.flash_amount < request.new_flash_amount:
-        raise HTTPException(status_code=status.HTTP_416_RANGE_NOT_SATISFIABLE,
-            detail=f"Number of flashcard is incorrect. Numbers must be higher than 0 and total amount of flashcard must be higher than new ones.")
     existing_user = db.scalars(select(DbUser).filter_by(login = request.login)).first()
     if existing_user:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT,

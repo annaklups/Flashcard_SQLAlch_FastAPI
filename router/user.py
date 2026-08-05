@@ -26,10 +26,10 @@ def get_all_users(db: Session = Depends(get_db)):
 def get_user(user_num: int, db: Session = Depends(get_db)):
     return db_user_functions.get_user(db, user_num)
 
-@router.post('/{user_num}')
+@router.put('/{user_num}')
 def update_user_settings(request: UserBase, user_num: int, db: Session = Depends(get_db)):
     return db_user_functions.update_user_settings(db, user_num, request)
 
-@router.get('/delete/{user_num}')
+@router.delete('/delete/{user_num}')
 def delete_user(user_num: int, db: Session = Depends(get_db)):
     return db_user_functions.delete_user(db, user_num)

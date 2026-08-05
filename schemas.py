@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List
 
 # Wages class for UserDisplay and FlashcardDisplay
@@ -11,10 +11,10 @@ class Wages(BaseModel):
 
 # Users classes
 class UserBase(BaseModel):
-    login: str
-    password: str
-    flash_amount: int
-    new_flash_amount: int
+    login: str = Field(pattern=r'^[A-Za-z]+$')
+    password: str = Field(pattern=r'^[A-Za-z]+$')
+    flash_amount: int = Field(ge = 1)
+    new_flash_amount: int = Field(ge = 0)
 
 class UserDisplay(BaseModel):
     user_num: int

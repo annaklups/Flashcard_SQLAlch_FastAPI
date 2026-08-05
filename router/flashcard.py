@@ -27,6 +27,6 @@ def get_flashcard(flash_num: int, db: Session = Depends(get_db)):
     return db_flashcard_functions.get_flashcard(db, flash_num)
 
 # Delete one flashcard
-@router.get('/delete/{flash_num}')
+@router.delete('/delete/{flash_num}')
 def delete_flashcard(flash_num: int, db: Session = Depends(get_db)):
     return db_flashcard_functions.delete_flashcard(db, flash_num)
