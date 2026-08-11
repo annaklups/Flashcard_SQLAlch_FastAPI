@@ -11,8 +11,9 @@ class Wages(BaseModel):
 
 # Users classes
 class UserBase(BaseModel):
-    login: str = Field(pattern=r'^[A-Za-z]+$')
-    password: str = Field(pattern=r'^[A-Za-z]+$')
+    login: str = Field(pattern=r'^[A-Za-z0-9]+$')
+    password: str = Field(pattern=r'^[A-Za-z0-9]+$')
+    # regex ^[A-Za-z0-9]+$ expects one or more big letters, small letters or digits
     flash_amount: int = Field(ge = 1)
     new_flash_amount: int = Field(ge = 0)
 

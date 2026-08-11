@@ -4,6 +4,7 @@ from fastapi import HTTPException, status
 
 from db.models import DbUser, DbFlashcard, DbWage
 from schemas import UserBase
+from db.hashing import Hash
 
 def create_user(db: Session, request: UserBase):
     """Creating user and adding user to db. Adding base wages to db for this user"""
@@ -13,7 +14,7 @@ def create_user(db: Session, request: UserBase):
             detail=f"User with login {request.login} exist already in database")
     new_user = DbUser(
         login = request.login, 
-        password = request.password, 
+        password = Hash.bcrypt(request.password), 
         flash_amount = request.flash_amount, 
         new_flash_amount = request.new_flash_amount)
     db.add(new_user)
@@ -40,6 +41,14 @@ def get_user(db: Session, user_num: int):
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
             detail=f"User with user_num {user_num} not found")
+    return user
+
+def get_user_by_login(db: Session, login: str):
+    """Getting one user from based ont its login"""
+    user = db.scalars(select(DbUser).filter_by(login = login)).first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"User with login {login} not found")
     return user
 
 def update_user_settings(db: Session, user_num: int, request: UserBase):
@@ -74,15 +83,12 @@ def delete_user(db: Session, user_num: int):
 #     db.commit()
 #     return 'ok'
 
-
 # def login(log_login, log_password):
 #     """Login function, returning user data if provided login and password are correct."""
 #     db = SessionLocal()
 #     user = db.scalars(select(User).filter_by(login = log_login, password = log_password)).first()
 #     db.close()
 #     return user
-
-
 
 # def change_password(log_login, new_password1):
 #     """Changing password to new one for provided user."""

@@ -1,10 +1,12 @@
-- add hashing to Password
 DONE - add http exception raise while when unique constraints failed (adding the same login or flashcard to db)
     currently internal server error
+DONE - add middleware (for future React frontend app)
+DONE - add hashing to Password
+
+
+- add authentication and loggin in module
 - add custom constraint to password
     currently constraint as in login as look around regex is not supported
 - add custom exceptions for constraints
-- add authentication and loggin in module
-DONE - add middleware (for future React frontend app)
 - figure out how implement learing module
 - create basic assert test to check the outcome automatically
