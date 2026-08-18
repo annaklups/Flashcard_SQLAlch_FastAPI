@@ -3,10 +3,9 @@ DONE - add http exception raise while when unique constraints failed (adding the
 DONE - add middleware (for future React frontend app)
 DONE - add hashing to Password
 
-
+- figure out how implement learing module
 - add authentication and loggin in module
 - add custom constraint to password
     currently constraint as in login as look around regex is not supported
 - add custom exceptions for constraints
-- figure out how implement learing module
 - create basic assert test to check the outcome automatically

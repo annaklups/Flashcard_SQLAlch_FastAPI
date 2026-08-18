@@ -18,11 +18,14 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
+    # kopia aby nie zmieniać danych wejściowych od użytkownika
     if expires_delta:
         expire = datetime.now(timezone.utc) + expires_delta
     else:
-        expire = datetime.now(timezone.utc) + timedelta(minutes=15)
+        expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    # jeżeli nie ma podanych w argumencie długości życia tokenu, to przyjmuje założony wczesniej czas
     to_encode.update({"exp": expire})
+    # dodanie czasu życia tokenu
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
@@ -37,9 +40,12 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
         username: str = payload.get("username")
         if username is None:
             raise credentials_exception
+        # sprawdzenie czy username is None - jeśli wygenerowałby się token bez usera
     except JWTError:
         raise credentials_exception
+    # sprawdzenie wszystkich pozostałych błędów w tym też błędny token, wygaśnięcie tokena itd. 
     user = db_user_functions.get_user_by_login(db, login=username)
     if user is None:
         raise credentials_exception
+    # sprawdzenie czy user nadal jest w db, a nie został np. w między czasie usunięty
     return user

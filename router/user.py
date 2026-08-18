@@ -4,7 +4,8 @@ from typing import List
 
 from db.database import get_db
 from db import db_user_functions
-from schemas import UserBase, UserDisplay
+from schemas import UserBase, UserDisplay, UserAuth
+from auth.oauth import get_current_user
 
 router = APIRouter(
     prefix = '/user',
@@ -27,7 +28,7 @@ def get_user(user_num: int, db: Session = Depends(get_db)):
     return db_user_functions.get_user(db, user_num)
 
 @router.put('/{user_num}')
-def update_user_settings(request: UserBase, user_num: int, db: Session = Depends(get_db)):
+def update_user_settings(request: UserBase, user_num: int, db: Session = Depends(get_db), current_user: UserAuth = Depends(get_current_user)):
     return db_user_functions.update_user_settings(db, user_num, request)
 
 @router.delete('/delete/{user_num}')

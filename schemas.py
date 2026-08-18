@@ -62,3 +62,9 @@ class AnswerDisplay(BaseModel):
     translate: str
     pol: str
     wage_change: int
+
+# class for authentication
+class UserAuth(BaseModel):
+    user_num: int
+    login: str
+    password: str

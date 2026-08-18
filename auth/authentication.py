@@ -9,6 +9,7 @@ from auth.oauth import create_access_token
 
 router = APIRouter(tags=['authentication'])
 
+# endpoint do logowania
 @router.post('/login')
 def login(request: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     user = db.query(DbUser).filter(DbUser.login == request.username).first()
@@ -25,3 +26,8 @@ def login(request: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(
         'user_id': user.user_num,
         'username': user.login
     }
+
+# request w odpowiedniej klasie - to jest login i hasło, które wysyła użytkownik
+# sprawdzenie czy jest w db
+# stworzenie tokenu
+# zwrócenie tokenu i jego typu, wraz z userem i loginem do którego są przypisane
