@@ -3,8 +3,9 @@ from sqlalchemy.orm import Session
 
 from db.database import get_db
 from db import db_flashcard_functions, db_wage_functions
-from schemas import LearningDisplay, AnswerBase, AnswerDisplay
+from schemas import LearningDisplay, AnswerBase, AnswerDisplay, UserAuth
 from services.flashcard_service import FlashService
+from auth.oauth import get_current_user
 
 router = APIRouter(
     prefix = '/learning',
@@ -13,9 +14,9 @@ router = APIRouter(
 
 # Draw one flashcard
 @router.get('/', response_model = LearningDisplay)
-def get_flashcard(user_num: int, is_new: bool, db: Session = Depends(get_db)):
+def get_flashcard(is_new: bool, db: Session = Depends(get_db), current_user: UserAuth = Depends(get_current_user)):
     flash_service = FlashService()
-    flash_num = flash_service.draw_flashcard(db, user_num, is_new)
+    flash_num = flash_service.draw_flashcard(db, current_user.user_num, is_new)
     return db_flashcard_functions.get_flashcard(db, flash_num)
 
 # Check users answer and update wages table

@@ -27,10 +27,18 @@ def get_all_users(db: Session = Depends(get_db)):
 def get_user(user_num: int, db: Session = Depends(get_db)):
     return db_user_functions.get_user(db, user_num)
 
-@router.put('/{user_num}')
-def update_user_settings(request: UserBase, user_num: int, db: Session = Depends(get_db), current_user: UserAuth = Depends(get_current_user)):
+@router.put('/update/{user_num}')
+def update_user_settings(request: UserBase, user_num: int, db: Session = Depends(get_db)):
     return db_user_functions.update_user_settings(db, user_num, request)
+
+@router.put('/update')
+def update_current_user_settings(request: UserBase, db: Session = Depends(get_db), current_user: UserAuth = Depends(get_current_user)):
+    return db_user_functions.update_user_settings(db, current_user.user_num, request)
 
 @router.delete('/delete/{user_num}')
 def delete_user(user_num: int, db: Session = Depends(get_db)):
     return db_user_functions.delete_user(db, user_num)
+
+@router.delete('/delete')
+def delete_current_user(db: Session = Depends(get_db), current_user: UserAuth = Depends(get_current_user)):
+    return db_user_functions.delete_user(db, current_user.user_num)

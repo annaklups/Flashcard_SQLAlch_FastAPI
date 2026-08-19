@@ -2,10 +2,15 @@ DONE - add http exception raise while when unique constraints failed (adding the
     currently internal server error
 DONE - add middleware (for future React frontend app)
 DONE - add hashing to Password
+DONE - add authentication and loggin in module
 
 - figure out how implement learing module
-- add authentication and loggin in module
 - add custom constraint to password
     currently constraint as in login as look around regex is not supported
 - add custom exceptions for constraints
 - create basic assert test to check the outcome automatically
+
+# To do:
+#- dodać możliwość przeglądania statystyk dla każdego usera:
+#       -dodatkowa tabela z datą i listą poprawnych/niepoprawnych odpowiedzi: data, login, fiszka, poprawne/niepoprawne
+#       -możliwość podsumowania: ilość poprawnych/ niepoprawnych odpowiedzi, najczęściej/najrzadziej trenowana fiszka, ilość dni treningu

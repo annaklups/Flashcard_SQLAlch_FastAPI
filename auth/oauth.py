@@ -9,7 +9,7 @@ from db.database import get_db
 from db import db_user_functions
 
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 
 # zmienić secret key
 SECRET_KEY = '593d7be214ee4b0099acca32dec83f2d127cb45d4e033a727d38c5eb5502df93'
