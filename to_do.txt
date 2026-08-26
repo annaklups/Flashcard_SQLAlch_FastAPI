@@ -3,6 +3,11 @@ DONE - add http exception raise while when unique constraints failed (adding the
 DONE - add middleware (for future React frontend app)
 DONE - add hashing to Password
 DONE - add authentication and loggin in module
+DONE - create React app
+DONE - add Homepage page
+DONE - add Menu page and buttons
+DONE - add Login page and functionality
+DONE - add Logout page and functionality
 
 - add buttons and connect functions to it:
     - create new flashcard
@@ -10,7 +15,10 @@ DONE - add authentication and loggin in module
     - change password
     - delete user
     - learning mode
-    
+- add Login as admin button and functionality, maybe endpoint?
+
+
+- change schemas to not send unnecessary information (login, password etc.) in change settings request
 - add custom constraint to password
     currently constraint as in login as look around regex is not supported
 - add custom exceptions for constraints

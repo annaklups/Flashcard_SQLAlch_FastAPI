@@ -37,17 +37,19 @@
 }
 
 .Start-button {
-  font-size: 2em;
-  padding: 0.5em 1em;
+  font-size: 1.7em;
+  padding: 0.425em 0.85em;
 }
 
 .Menu-button {
-  font-size: 2em;
-  padding: 0.5em 1em;
+  font-size: 1.7em;
+  padding: 0.425em 0.85em;
 }
 
 .Create-user-form,
-.Login-form {
+.Login-form,
+.Settings-form,
+.Flashcard-form {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
@@ -55,7 +57,9 @@
 }
 
 .Create-user-form label,
-.Login-form label {
+.Login-form label,
+.Settings-form label,
+.Flashcard-form label {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
@@ -63,7 +67,9 @@
 }
 
 .Create-user-form input,
-.Login-form input {
+.Login-form input,
+.Settings-form input,
+.Flashcard-form input {
   font-size: 1rem;
   padding: 0.4rem;
 }
@@ -82,10 +88,26 @@
   white-space: nowrap;
 }
 
+.Settings-submit {
+  width: 160%;
+  align-self: center;
+  box-sizing: border-box;
+  white-space: nowrap;
+}
+
+.Flashcard-submit {
+  width: 160%;
+  align-self: center;
+  box-sizing: border-box;
+  white-space: nowrap;
+}
+
 .Back-button {
   position: fixed;
   left: 1rem;
   bottom: 1rem;
+  font-size: 0.85em;
+  padding: 0.425em 0.85em;
 }
 
 @keyframes App-logo-spin {

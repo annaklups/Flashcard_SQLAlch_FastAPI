@@ -68,3 +68,11 @@ class UserAuth(BaseModel):
     user_num: int
     login: str
     password: str
+
+# class for change settings and password
+class UserChangeSet(BaseModel):
+    flash_amount: int
+    new_flash_amount: int
+
+class UserChangePass(BaseModel):
+    password: str

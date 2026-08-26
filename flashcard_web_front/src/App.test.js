@@ -16,6 +16,10 @@ test('Start button opens the Menu page', () => {
   expect(screen.getByRole('button', { name: 'Create user' })).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Log in' })).toBeInTheDocument();
   expect(screen.queryByRole('button', { name: 'Log out' })).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Change settings' })).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Change password' })).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Add new flashcard' })).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Start learning' })).not.toBeInTheDocument();
 
   fireEvent.click(screen.getByRole('button', { name: 'Back' }));
 
@@ -73,10 +77,69 @@ test('Log in submits credentials and shows the logged-in user', async () => {
   });
   expect(screen.getByRole('heading', { name: 'Menu' })).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Log out' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Change settings' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Change password' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Add new flashcard' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Start learning' })).toBeInTheDocument();
   expect(localStorage.getItem('access_token')).toBe('token');
 
+  fireEvent.click(screen.getByRole('button', { name: 'Change settings' }));
+  expect(screen.getByRole('heading', { name: 'Change settings' })).toBeInTheDocument();
+  fireEvent.change(screen.getByLabelText('Flashcards amount'), {
+    target: { value: '30' },
+  });
+  fireEvent.change(screen.getByLabelText('New flashcards amount'), {
+    target: { value: '10' },
+  });
+  fireEvent.submit(screen.getByRole('form', { name: 'Change settings form' }));
+
+  await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(2));
+  expect(global.fetch).toHaveBeenLastCalledWith('http://localhost:8000/user/update', {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: 'Bearer token',
+    },
+    body: JSON.stringify({ flash_amount: 30, new_flash_amount: 10 }),
+  });
+  expect(
+    await screen.findByText('Settings changed successfully.'),
+  ).toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole('button', { name: 'Back' }));
+  expect(screen.getByRole('heading', { name: 'Menu' })).toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole('button', { name: 'Add new flashcard' }));
+  expect(screen.getByRole('heading', { name: 'Add new flashcard' })).toBeInTheDocument();
+  fireEvent.change(screen.getByLabelText('Word'), {
+    target: { value: 'hello' },
+  });
+  fireEvent.change(screen.getByLabelText('Translation'), {
+    target: { value: 'czesc' },
+  });
+  fireEvent.change(screen.getByLabelText('Topic'), {
+    target: { value: 'greetings' },
+  });
+  fireEvent.submit(screen.getByRole('form', { name: 'Add new flashcard form' }));
+
+  await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(3));
+  expect(global.fetch).toHaveBeenLastCalledWith('http://localhost:8000/flashcard/', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: 'Bearer token',
+    },
+    body: JSON.stringify({ pol: 'hello', translate: 'czesc', topic: 'greetings' }),
+  });
+  expect(
+    await screen.findByText('Flashcard added successfully.'),
+  ).toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole('button', { name: 'Back' }));
+  expect(screen.getByRole('heading', { name: 'Menu' })).toBeInTheDocument();
+
   fireEvent.click(screen.getByRole('button', { name: 'Log out' }));
-  expect(global.fetch).toHaveBeenCalledTimes(1);
+  expect(global.fetch).toHaveBeenCalledTimes(3);
   expect(localStorage.getItem('access_token')).toBeNull();
   await waitFor(() => expect(
     screen.queryByRole('button', { name: 'Log out' }),

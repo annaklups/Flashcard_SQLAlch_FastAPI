@@ -13,6 +13,17 @@ function App() {
   const [loginForm, setLoginForm] = useState({ login: '', password: '' });
   const [loggedInUser, setLoggedInUser] = useState('');
   const [loginStatus, setLoginStatus] = useState('');
+  const [settingsForm, setSettingsForm] = useState({
+    flash_amount: 20,
+    new_flash_amount: 5,
+  });
+  const [settingsStatus, setSettingsStatus] = useState('');
+  const [flashcardForm, setFlashcardForm] = useState({
+    pol: '',
+    translate: '',
+    topic: '',
+  });
+  const [flashcardStatus, setFlashcardStatus] = useState('');
 
   useEffect(() => {
     if (loginStatus !== 'Succesful log in') {
@@ -86,6 +97,73 @@ function App() {
     }
   };
 
+  const handleSettingsChange = (event) => {
+    const { name, value } = event.target;
+    setSettingsForm((currentForm) => ({
+      ...currentForm,
+      [name]: Number(value),
+    }));
+  };
+
+  const handleSettingsSubmit = async (event) => {
+    event.preventDefault();
+    setSettingsStatus('');
+
+    try {
+      const response = await fetch('http://localhost:8000/user/update', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+        },
+        body: JSON.stringify(settingsForm),
+      });
+      const responseBody = await response.json();
+
+      if (!response.ok) {
+        throw new Error(responseBody.detail || 'Unable to change settings.');
+      }
+
+      setSettingsStatus('Settings changed successfully.');
+    } catch (error) {
+      setSettingsStatus(error.message);
+    }
+  };
+
+  const handleFlashcardChange = (event) => {
+    const { name, value } = event.target;
+    setFlashcardForm((currentForm) => ({
+      ...currentForm,
+      [name]: value,
+    }));
+  };
+
+  const handleFlashcardSubmit = async (event) => {
+    event.preventDefault();
+    setFlashcardStatus('');
+
+    try {
+      const response = await fetch('http://localhost:8000/flashcard/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+        },
+        body: JSON.stringify(flashcardForm),
+      });
+      const responseBody = await response.json();
+
+      if (!response.ok) {
+        throw new Error(responseBody.detail || 'Unable to add flashcard.');
+      }
+
+      setFlashcardStatus('Flashcard added successfully.');
+      setFlashcardForm({ pol: '', translate: '', topic: '' });
+    } catch (error) {
+      setFlashcardStatus(error.message);
+    }
+  };
+
   return (
     <div className="App">
       {loggedInUser && (
@@ -138,22 +216,150 @@ function App() {
               Log in
             </button>
             {loggedInUser && (
-              <button
-                className="Menu-button"
-                type="button"
-                onClick={() => {
-                  localStorage.removeItem('access_token');
-                  setLoggedInUser('');
-                  setLoginStatus('');
-                }}
-              >
-                Log out
-              </button>
+              <>
+                <button
+                  className="Menu-button"
+                  type="button"
+                  onClick={() => {
+                    setSettingsStatus('');
+                    setPage('settings');
+                  }}
+                >
+                  Change settings
+                </button>
+                <button className="Menu-button" type="button">
+                  Change password
+                </button>
+                <button
+                  className="Menu-button"
+                  type="button"
+                  onClick={() => {
+                    setFlashcardStatus('');
+                    setPage('add-flashcard');
+                  }}
+                >
+                  Add new flashcard
+                </button>
+                <button className="Menu-button" type="button">
+                  Start learning
+                </button>
+                <button
+                  className="Menu-button"
+                  type="button"
+                  onClick={() => {
+                    localStorage.removeItem('access_token');
+                    setLoggedInUser('');
+                    setLoginStatus('');
+                  }}
+                >
+                  Log out
+                </button>
+              </>
             )}
             <button
               className="Back-button"
               type="button"
               onClick={() => setPage('home')}
+            >
+              Back
+            </button>
+          </>
+        ) : page === 'settings' ? (
+          <>
+            <h1>Change settings</h1>
+            <form
+              className="Settings-form"
+              aria-label="Change settings form"
+              onSubmit={handleSettingsSubmit}
+            >
+              <label>
+                Flashcards amount
+                <input
+                  name="flash_amount"
+                  type="number"
+                  min="1"
+                  required
+                  value={settingsForm.flash_amount}
+                  onChange={handleSettingsChange}
+                />
+              </label>
+              <label>
+                New flashcards amount
+                <input
+                  name="new_flash_amount"
+                  type="number"
+                  min="0"
+                  required
+                  value={settingsForm.new_flash_amount}
+                  onChange={handleSettingsChange}
+                />
+              </label>
+              <button
+                className="Menu-button Settings-submit"
+                type="submit"
+              >
+                Save settings
+              </button>
+            </form>
+            {settingsStatus && <p role="status">{settingsStatus}</p>}
+            <button
+              className="Back-button"
+              type="button"
+              onClick={() => setPage('menu')}
+            >
+              Back
+            </button>
+          </>
+        ) : page === 'add-flashcard' ? (
+          <>
+            <h1>Add new flashcard</h1>
+            <form
+              className="Flashcard-form"
+              aria-label="Add new flashcard form"
+              onSubmit={handleFlashcardSubmit}
+            >
+              <label>
+                Word
+                <input
+                  name="pol"
+                  type="text"
+                  required
+                  value={flashcardForm.pol}
+                  onChange={handleFlashcardChange}
+                />
+              </label>
+              <label>
+                Translation
+                <input
+                  name="translate"
+                  type="text"
+                  required
+                  value={flashcardForm.translate}
+                  onChange={handleFlashcardChange}
+                />
+              </label>
+              <label>
+                Topic
+                <input
+                  name="topic"
+                  type="text"
+                  required
+                  value={flashcardForm.topic}
+                  onChange={handleFlashcardChange}
+                />
+              </label>
+              <button
+                className="Menu-button Flashcard-submit"
+                type="submit"
+              >
+                Add flashcard
+              </button>
+            </form>
+            {flashcardStatus && <p role="status">{flashcardStatus}</p>}
+            <button
+              className="Back-button"
+              type="button"
+              onClick={() => setPage('menu')}
             >
               Back
             </button>
