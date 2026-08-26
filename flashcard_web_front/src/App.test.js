@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import App from './App';
 
 test('renders learn react link', () => {
@@ -15,6 +15,7 @@ test('Start button opens the Menu page', () => {
   expect(screen.getByRole('heading', { name: 'Menu' })).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Create user' })).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Log in' })).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Log out' })).not.toBeInTheDocument();
 
   fireEvent.click(screen.getByRole('button', { name: 'Back' }));
 
@@ -35,6 +36,55 @@ test('Log in button opens the Log in page', () => {
   expect(screen.getByLabelText('Login')).toBeInTheDocument();
   expect(screen.getByLabelText('Password')).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Log in' })).toBeInTheDocument();
+});
+
+test('Log in submits credentials and shows the logged-in user', async () => {
+  const originalFetch = global.fetch;
+  global.fetch = jest.fn().mockResolvedValue({
+    status: 200,
+    ok: true,
+    json: async () => ({ username: 'newuser', access_token: 'token' }),
+  });
+
+  render(<App />);
+  fireEvent.click(screen.getByRole('button', { name: /start/i }));
+  fireEvent.click(screen.getByRole('button', { name: 'Log in' }));
+  fireEvent.change(screen.getByLabelText('Login'), {
+    target: { value: 'newuser' },
+  });
+  fireEvent.change(screen.getByLabelText('Password'), {
+    target: { value: 'password123' },
+  });
+  fireEvent.submit(screen.getByRole('form', { name: 'Log in form' }));
+
+  await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(1));
+  expect(global.fetch).toHaveBeenCalledWith('http://localhost:8000/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: 'username=newuser&password=password123',
+  });
+  expect(
+    await screen.findByText("Logged in as 'newuser'"),
+  ).toBeInTheDocument();
+  expect(screen.getByText('Succesful log in')).toBeInTheDocument();
+
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+  });
+  expect(screen.getByRole('heading', { name: 'Menu' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Log out' })).toBeInTheDocument();
+  expect(localStorage.getItem('access_token')).toBe('token');
+
+  fireEvent.click(screen.getByRole('button', { name: 'Log out' }));
+  expect(global.fetch).toHaveBeenCalledTimes(1);
+  expect(localStorage.getItem('access_token')).toBeNull();
+  await waitFor(() => expect(
+    screen.queryByRole('button', { name: 'Log out' }),
+  ).not.toBeInTheDocument());
+  fireEvent.click(screen.getByRole('button', { name: 'Log in' }));
+  expect(screen.queryByText('Succesful log in')).not.toBeInTheDocument();
+
+  global.fetch = originalFetch;
 });
 
 test('Create user submits the required user data', async () => {

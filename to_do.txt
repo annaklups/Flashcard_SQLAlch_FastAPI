@@ -4,7 +4,13 @@ DONE - add middleware (for future React frontend app)
 DONE - add hashing to Password
 DONE - add authentication and loggin in module
 
-- figure out how implement learing module
+- add buttons and connect functions to it:
+    - create new flashcard
+    - change settings
+    - change password
+    - delete user
+    - learning mode
+    
 - add custom constraint to password
     currently constraint as in login as look around regex is not supported
 - add custom exceptions for constraints

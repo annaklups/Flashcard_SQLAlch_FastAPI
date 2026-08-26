@@ -1,5 +1,5 @@
 import './App.css';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 function App() {
   const [page, setPage] = useState('home');
@@ -10,6 +10,18 @@ function App() {
     new_flash_amount: 5,
   });
   const [createUserStatus, setCreateUserStatus] = useState('');
+  const [loginForm, setLoginForm] = useState({ login: '', password: '' });
+  const [loggedInUser, setLoggedInUser] = useState('');
+  const [loginStatus, setLoginStatus] = useState('');
+
+  useEffect(() => {
+    if (loginStatus !== 'Succesful log in') {
+      return undefined;
+    }
+
+    const redirectTimer = setTimeout(() => setPage('menu'), 3000);
+    return () => clearTimeout(redirectTimer);
+  }, [loginStatus]);
 
   const handleCreateUserChange = (event) => {
     const { name, value } = event.target;
@@ -41,8 +53,46 @@ function App() {
     }
   };
 
+  const handleLoginChange = (event) => {
+    const { name, value } = event.target;
+    setLoginForm((currentForm) => ({ ...currentForm, [name]: value }));
+  };
+
+  const handleLoginSubmit = async (event) => {
+    event.preventDefault();
+    setLoginStatus('');
+
+    try {
+      const requestBody = new URLSearchParams({
+        username: loginForm.login,
+        password: loginForm.password,
+      });
+      const response = await fetch('http://localhost:8000/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: requestBody.toString(),
+      });
+      const responseBody = await response.json();
+
+      if (response.status !== 200) {
+        throw new Error(responseBody.detail || 'Unable to log in.');
+      }
+
+      setLoggedInUser(responseBody.username);
+      localStorage.setItem('access_token', responseBody.access_token);
+      setLoginStatus('Succesful log in');
+    } catch (error) {
+      setLoginStatus(error.message);
+    }
+  };
+
   return (
     <div className="App">
+      {loggedInUser && (
+        <div className="Login-status">
+          Logged in as '{loggedInUser}'
+        </div>
+      )}
       <header className="App-header">
         {page === 'home' ? (
           <>
@@ -87,6 +137,19 @@ function App() {
             >
               Log in
             </button>
+            {loggedInUser && (
+              <button
+                className="Menu-button"
+                type="button"
+                onClick={() => {
+                  localStorage.removeItem('access_token');
+                  setLoggedInUser('');
+                  setLoginStatus('');
+                }}
+              >
+                Log out
+              </button>
+            )}
             <button
               className="Back-button"
               type="button"
@@ -166,14 +229,30 @@ function App() {
         ) : (
           <>
             <h1>Log in</h1>
-            <form className="Login-form" aria-label="Log in form">
+            <form
+              className="Login-form"
+              aria-label="Log in form"
+              onSubmit={handleLoginSubmit}
+            >
               <label>
                 Login
-                <input name="login" type="text" required />
+                <input
+                  name="login"
+                  type="text"
+                  required
+                  value={loginForm.login}
+                  onChange={handleLoginChange}
+                />
               </label>
               <label>
                 Password
-                <input name="password" type="password" required />
+                <input
+                  name="password"
+                  type="password"
+                  required
+                  value={loginForm.password}
+                  onChange={handleLoginChange}
+                />
               </label>
               <button
                 className="Menu-button Login-submit"
@@ -182,6 +261,7 @@ function App() {
                 Log in
               </button>
             </form>
+            {loginStatus && <p role="status">{loginStatus}</p>}
             <button
               className="Back-button"
               type="button"
