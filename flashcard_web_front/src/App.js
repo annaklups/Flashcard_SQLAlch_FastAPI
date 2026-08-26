@@ -24,6 +24,12 @@ function App() {
     topic: '',
   });
   const [flashcardStatus, setFlashcardStatus] = useState('');
+  const [passwordForm, setPasswordForm] = useState({
+    old_password: '',
+    new_password1: '',
+    new_password2: '',
+  });
+  const [passwordStatus, setPasswordStatus] = useState('');
 
   useEffect(() => {
     if (loginStatus !== 'Succesful log in') {
@@ -164,6 +170,45 @@ function App() {
     }
   };
 
+  const handlePasswordChange = (event) => {
+    const { name, value } = event.target;
+    setPasswordForm((currentForm) => ({
+      ...currentForm,
+      [name]: value,
+    }));
+  };
+
+  const handlePasswordSubmit = async (event) => {
+    event.preventDefault();
+    setPasswordStatus('');
+
+    if (passwordForm.new_password1 !== passwordForm.new_password2) {
+      setPasswordStatus('Passwords do not match.');
+      return;
+    }
+
+    try {
+      const response = await fetch('http://localhost:8000/user/update_pass', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+        },
+        body: JSON.stringify(passwordForm),
+      });
+      const responseBody = await response.json();
+
+      if (!response.ok) {
+        throw new Error(responseBody.detail || 'Unable to change password.');
+      }
+
+      setPasswordStatus('Password changed successfully.');
+      setPasswordForm({ old_password: '', new_password1: '', new_password2: '' });
+    } catch (error) {
+      setPasswordStatus(error.message);
+    }
+  };
+
   return (
     <div className="App">
       {loggedInUser && (
@@ -227,7 +272,14 @@ function App() {
                 >
                   Change settings
                 </button>
-                <button className="Menu-button" type="button">
+                <button
+                  className="Menu-button"
+                  type="button"
+                  onClick={() => {
+                    setPasswordStatus('');
+                    setPage('password');
+                  }}
+                >
                   Change password
                 </button>
                 <button
@@ -260,6 +312,62 @@ function App() {
               className="Back-button"
               type="button"
               onClick={() => setPage('home')}
+            >
+              Back
+            </button>
+          </>
+        ) : page === 'password' ? (
+          <>
+            <h1>Change password</h1>
+            <form
+              className="Password-form"
+              aria-label="Change password form"
+              onSubmit={handlePasswordSubmit}
+            >
+              <label>
+                Current password
+                <input
+                  name="old_password"
+                  type="password"
+                  required
+                  value={passwordForm.old_password}
+                  onChange={handlePasswordChange}
+                />
+              </label>
+              <label>
+                New password
+                <input
+                  name="new_password1"
+                  type="password"
+                  pattern="[A-Za-z0-9]+"
+                  required
+                  value={passwordForm.new_password1}
+                  onChange={handlePasswordChange}
+                />
+              </label>
+              <label>
+                Confirm new password
+                <input
+                  name="new_password2"
+                  type="password"
+                  pattern="[A-Za-z0-9]+"
+                  required
+                  value={passwordForm.new_password2}
+                  onChange={handlePasswordChange}
+                />
+              </label>
+              <button
+                className="Menu-button Password-submit"
+                type="submit"
+              >
+                Save password
+              </button>
+            </form>
+            {passwordStatus && <p role="status">{passwordStatus}</p>}
+            <button
+              className="Back-button"
+              type="button"
+              onClick={() => setPage('menu')}
             >
               Back
             </button>

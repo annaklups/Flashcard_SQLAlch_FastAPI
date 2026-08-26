@@ -49,7 +49,8 @@
 .Create-user-form,
 .Login-form,
 .Settings-form,
-.Flashcard-form {
+.Flashcard-form,
+.Password-form {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
@@ -59,7 +60,8 @@
 .Create-user-form label,
 .Login-form label,
 .Settings-form label,
-.Flashcard-form label {
+.Flashcard-form label,
+.Password-form label {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
@@ -69,7 +71,8 @@
 .Create-user-form input,
 .Login-form input,
 .Settings-form input,
-.Flashcard-form input {
+.Flashcard-form input,
+.Password-form input {
   font-size: 1rem;
   padding: 0.4rem;
 }
@@ -96,6 +99,13 @@
 }
 
 .Flashcard-submit {
+  width: 160%;
+  align-self: center;
+  box-sizing: border-box;
+  white-space: nowrap;
+}
+
+.Password-submit {
   width: 160%;
   align-self: center;
   box-sizing: border-box;

@@ -69,9 +69,16 @@ def update_user_password(db: Session, user_num: int, request: UserChangePass):
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
             detail=f"User with user_num {user_num} not found")
-    db.execute(update(DbUser).where(DbUser.user_num == user_num).values(
-        password = Hash.bcrypt(request.password)))      
-    db.commit()
+    if not Hash.verify(user.password, request.old_password):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"Previous password {request.old_password} incorrect")
+    if request.new_password1 == request.new_password2:
+        db.execute(update(DbUser).where(DbUser.user_num == user_num).values(
+            password = Hash.bcrypt(request.new_password2)))      
+        db.commit()
+    else:
+        raise HTTPException(status_code=status.HTTP_406_NOT_ACCEPTABLE,
+            detail=f"New passwords are not matching")
     return 'ok'
 
 def delete_user(db: Session, user_num: int):

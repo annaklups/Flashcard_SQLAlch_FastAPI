@@ -8,17 +8,37 @@ DONE - add Homepage page
 DONE - add Menu page and buttons
 DONE - add Login page and functionality
 DONE - add Logout page and functionality
+DONE - change schemas to not send unnecessary information (login, password etc.) in change settings request
+DONE - add buttons and connect functions to it:
+    - create new flashcard
+    - change settings
+    - change password
+    
 
-- add buttons and connect functions to it:
+
+- add buttons and connect functions to it:    
+    - delete user
+    - learning mode
+- add messages for errors eg. Incorrect password, flahcards exist in db, user with this login exist in db etc.
+- test:
     - create new flashcard
     - change settings
     - change password
     - delete user
     - learning mode
 - add Login as admin button and functionality, maybe endpoint?
+- add admin functionalities:
+    - get all users
+    - get one user
+    - change settings, password by user_num
+    - delete user by user_num
+    - get all flashcard
+    - delete flashcard
+    - update flashcard
+    - add bunch of flashcard
+- show if token expires and automatically log out 
 
 
-- change schemas to not send unnecessary information (login, password etc.) in change settings request
 - add custom constraint to password
     currently constraint as in login as look around regex is not supported
 - add custom exceptions for constraints

@@ -138,8 +138,41 @@ test('Log in submits credentials and shows the logged-in user', async () => {
   fireEvent.click(screen.getByRole('button', { name: 'Back' }));
   expect(screen.getByRole('heading', { name: 'Menu' })).toBeInTheDocument();
 
+  fireEvent.click(screen.getByRole('button', { name: 'Change password' }));
+  expect(screen.getByRole('heading', { name: 'Change password' })).toBeInTheDocument();
+  fireEvent.change(screen.getByLabelText('Current password'), {
+    target: { value: 'password123' },
+  });
+  fireEvent.change(screen.getByLabelText('New password'), {
+    target: { value: 'newpassword123' },
+  });
+  fireEvent.change(screen.getByLabelText('Confirm new password'), {
+    target: { value: 'newpassword123' },
+  });
+  fireEvent.submit(screen.getByRole('form', { name: 'Change password form' }));
+
+  await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(4));
+  expect(global.fetch).toHaveBeenLastCalledWith('http://localhost:8000/user/update_pass', {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: 'Bearer token',
+    },
+    body: JSON.stringify({
+      old_password: 'password123',
+      new_password1: 'newpassword123',
+      new_password2: 'newpassword123',
+    }),
+  });
+  expect(
+    await screen.findByText('Password changed successfully.'),
+  ).toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole('button', { name: 'Back' }));
+  expect(screen.getByRole('heading', { name: 'Menu' })).toBeInTheDocument();
+
   fireEvent.click(screen.getByRole('button', { name: 'Log out' }));
-  expect(global.fetch).toHaveBeenCalledTimes(3);
+  expect(global.fetch).toHaveBeenCalledTimes(4);
   expect(localStorage.getItem('access_token')).toBeNull();
   await waitFor(() => expect(
     screen.queryByRole('button', { name: 'Log out' }),
