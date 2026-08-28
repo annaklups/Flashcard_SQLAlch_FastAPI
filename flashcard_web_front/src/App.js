@@ -12,6 +12,7 @@ function App() {
   const [createUserStatus, setCreateUserStatus] = useState('');
   const [loginForm, setLoginForm] = useState({ login: '', password: '' });
   const [loggedInUser, setLoggedInUser] = useState('');
+  const [loggedInUserId, setLoggedInUserId] = useState(null);
   const [loginStatus, setLoginStatus] = useState('');
   const [settingsForm, setSettingsForm] = useState({
     flash_amount: 20,
@@ -30,6 +31,14 @@ function App() {
     new_password2: '',
   });
   const [passwordStatus, setPasswordStatus] = useState('');
+  const [deleteUserForm, setDeleteUserForm] = useState({
+    old_password1: '',
+    old_password2: '',
+  });
+  const [deleteUserStatus, setDeleteUserStatus] = useState('');
+  const [learningCard, setLearningCard] = useState(null);
+  const [learningAnswer, setLearningAnswer] = useState('');
+  const [learningStatus, setLearningStatus] = useState('');
 
   useEffect(() => {
     if (loginStatus !== 'Succesful log in') {
@@ -96,6 +105,7 @@ function App() {
       }
 
       setLoggedInUser(responseBody.username);
+      setLoggedInUserId(responseBody.user_id);
       localStorage.setItem('access_token', responseBody.access_token);
       setLoginStatus('Succesful log in');
     } catch (error) {
@@ -209,6 +219,98 @@ function App() {
     }
   };
 
+  const handleDeleteUserChange = (event) => {
+    const { name, value } = event.target;
+    setDeleteUserForm((currentForm) => ({ ...currentForm, [name]: value }));
+  };
+
+  const handleDeleteUserSubmit = async (event) => {
+    event.preventDefault();
+    setDeleteUserStatus('');
+
+    try {
+      const response = await fetch('http://localhost:8000/user/delete', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+        },
+        body: JSON.stringify(deleteUserForm),
+      });
+      const responseBody = await response.json();
+
+      if (!response.ok) {
+        throw new Error(responseBody.detail || 'Unable to delete user.');
+      }
+
+      localStorage.removeItem('access_token');
+      setLoggedInUser('');
+      setLoginStatus('');
+      setPage('menu');
+    } catch (error) {
+      setDeleteUserStatus(error.message);
+    }
+  };
+
+  const loadLearningCard = async () => {
+    setLearningStatus('');
+    setLearningCard(null);
+    setLearningAnswer('');
+
+    try {
+      const response = await fetch('http://localhost:8000/learning/?is_new=true', {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+        },
+      });
+      const responseBody = await response.json();
+
+      if (!response.ok) {
+        throw new Error(responseBody.detail || 'Unable to load a flashcard.');
+      }
+
+      setLearningCard(responseBody);
+    } catch (error) {
+      setLearningStatus(error.message);
+    }
+  };
+
+  const handleLearningAnswerSubmit = async (event) => {
+    event.preventDefault();
+    setLearningStatus('');
+
+    try {
+      const response = await fetch('http://localhost:8000/learning/answer', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+        },
+        body: JSON.stringify({
+          flash_num: learningCard.flash_num,
+          pol: learningCard.pol,
+          answer: learningAnswer,
+          user_num: loggedInUserId,
+        }),
+      });
+      const responseBody = await response.json();
+
+      if (!response.ok) {
+        throw new Error(responseBody.detail || 'Unable to check the answer.');
+      }
+
+      setLearningStatus(
+        responseBody.wage_change === -1
+          ? 'Correct answer.'
+          : `Incorrect answer. Correct translation: ${responseBody.translate}`,
+      );
+      setLearningCard(null);
+      setLearningAnswer('');
+    } catch (error) {
+      setLearningStatus(error.message);
+    }
+  };
+
   return (
     <div className="App">
       {loggedInUser && (
@@ -286,13 +388,30 @@ function App() {
                   className="Menu-button"
                   type="button"
                   onClick={() => {
+                    setDeleteUserStatus('');
+                    setPage('delete-user');
+                  }}
+                >
+                  Delete user
+                </button>
+                <button
+                  className="Menu-button"
+                  type="button"
+                  onClick={() => {
                     setFlashcardStatus('');
                     setPage('add-flashcard');
                   }}
                 >
                   Add new flashcard
                 </button>
-                <button className="Menu-button" type="button">
+                <button
+                  className="Menu-button"
+                  type="button"
+                  onClick={() => {
+                    setPage('learning');
+                    loadLearningCard();
+                  }}
+                >
                   Start learning
                 </button>
                 <button
@@ -301,6 +420,7 @@ function App() {
                   onClick={() => {
                     localStorage.removeItem('access_token');
                     setLoggedInUser('');
+                    setLoggedInUserId(null);
                     setLoginStatus('');
                   }}
                 >
@@ -312,6 +432,87 @@ function App() {
               className="Back-button"
               type="button"
               onClick={() => setPage('home')}
+            >
+              Back
+            </button>
+          </>
+        ) : page === 'learning' ? (
+          <>
+            <h1>Learning</h1>
+            {learningCard && (
+              <form
+                className="Learning-form"
+                aria-label="Learning form"
+                onSubmit={handleLearningAnswerSubmit}
+              >
+                <p>{learningCard.pol}</p>
+                <label>
+                  Translation
+                  <input
+                    name="answer"
+                    type="text"
+                    value={learningAnswer}
+                    onChange={(event) => setLearningAnswer(event.target.value)}
+                    required
+                  />
+                </label>
+                <button className="Menu-button" type="submit">
+                  Check answer
+                </button>
+              </form>
+            )}
+            {!learningCard && !learningStatus && <p>Loading flashcard...</p>}
+            {learningStatus && <p role="status">{learningStatus}</p>}
+            {!learningCard && learningStatus && (
+              <button className="Menu-button" type="button" onClick={loadLearningCard}>
+                Next card
+              </button>
+            )}
+            <button
+              className="Back-button"
+              type="button"
+              onClick={() => setPage('menu')}
+            >
+              Back
+            </button>
+          </>
+        ) : page === 'delete-user' ? (
+          <>
+            <h1>Delete user</h1>
+            <form
+              className="Password-form"
+              aria-label="Delete user form"
+              onSubmit={handleDeleteUserSubmit}
+            >
+              <label>
+                Current password
+                <input
+                  name="old_password1"
+                  type="password"
+                  value={deleteUserForm.old_password1}
+                  onChange={handleDeleteUserChange}
+                  required
+                />
+              </label>
+              <label>
+                Confirm current password
+                <input
+                  name="old_password2"
+                  type="password"
+                  value={deleteUserForm.old_password2}
+                  onChange={handleDeleteUserChange}
+                  required
+                />
+              </label>
+              <button className="Menu-button Password-submit" type="submit">
+                Delete user
+              </button>
+            </form>
+            {deleteUserStatus && <p role="status">{deleteUserStatus}</p>}
+            <button
+              className="Back-button"
+              type="button"
+              onClick={() => setPage('menu')}
             >
               Back
             </button>

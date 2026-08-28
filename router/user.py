@@ -4,7 +4,7 @@ from typing import List
 
 from db.database import get_db
 from db import db_user_functions
-from schemas import UserBase, UserDisplay, UserAuth, UserChangeSet, UserChangePass
+from schemas import UserBase, UserDisplay, UserAuth, UserChangeSet, UserChangePass, UserDelete
 from auth.oauth import get_current_user
 
 router = APIRouter(
@@ -48,5 +48,5 @@ def delete_user(user_num: int, db: Session = Depends(get_db)):
     return db_user_functions.delete_user(db, user_num)
 
 @router.delete('/delete')
-def delete_current_user(db: Session = Depends(get_db), current_user: UserAuth = Depends(get_current_user)):
-    return db_user_functions.delete_user(db, current_user.user_num)
+def delete_current_user(user_request: UserDelete, db: Session = Depends(get_db), current_user: UserAuth = Depends(get_current_user)):
+    return db_user_functions.delete_user(db, current_user.user_num, user_request)

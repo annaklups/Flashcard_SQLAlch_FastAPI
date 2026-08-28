@@ -3,7 +3,7 @@ from sqlalchemy.orm.session import Session
 from fastapi import HTTPException, status
 
 from db.models import DbUser, DbFlashcard, DbWage
-from schemas import UserBase, UserChangeSet, UserChangePass
+from schemas import UserBase, UserChangeSet, UserChangePass, UserDelete
 from db.hashing import Hash
 
 def create_user(db: Session, request: UserBase):
@@ -81,12 +81,29 @@ def update_user_password(db: Session, user_num: int, request: UserChangePass):
             detail=f"New passwords are not matching")
     return 'ok'
 
-def delete_user(db: Session, user_num: int):
+def delete_user(db: Session, user_num: int, user_request: UserDelete):
     """Deleting user and all its data from db"""
     user = db.scalars(select(DbUser).filter_by(user_num = user_num)).first()
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
             detail=f"User with user_num {user_num} not found")
-    db.delete(user)
-    db.commit()
+    if not Hash.verify(user.password, user_request.old_password1):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"Previous password {user_request.old_password1} incorrect")
+    if user_request.old_password1 == user_request.old_password2:
+        db.delete(user)
+        db.commit()
+    else:
+        raise HTTPException(status_code=status.HTTP_406_NOT_ACCEPTABLE,
+            detail=f"Passwords are not matching")        
     return "ok"
+
+# def delete_user(db: Session, user_num: int):
+#     """Deleting user and all its data from db"""
+#     user = db.scalars(select(DbUser).filter_by(user_num = user_num)).first()
+#     if not user:
+#         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+#             detail=f"User with user_num {user_num} not found")
+#     db.delete(user)
+#     db.commit()
+#     return "ok"

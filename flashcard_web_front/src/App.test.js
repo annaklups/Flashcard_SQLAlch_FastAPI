@@ -18,6 +18,7 @@ test('Start button opens the Menu page', () => {
   expect(screen.queryByRole('button', { name: 'Log out' })).not.toBeInTheDocument();
   expect(screen.queryByRole('button', { name: 'Change settings' })).not.toBeInTheDocument();
   expect(screen.queryByRole('button', { name: 'Change password' })).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Delete user' })).not.toBeInTheDocument();
   expect(screen.queryByRole('button', { name: 'Add new flashcard' })).not.toBeInTheDocument();
   expect(screen.queryByRole('button', { name: 'Start learning' })).not.toBeInTheDocument();
 
@@ -79,9 +80,15 @@ test('Log in submits credentials and shows the logged-in user', async () => {
   expect(screen.getByRole('button', { name: 'Log out' })).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Change settings' })).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Change password' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Delete user' })).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Add new flashcard' })).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Start learning' })).toBeInTheDocument();
   expect(localStorage.getItem('access_token')).toBe('token');
+
+  fireEvent.click(screen.getByRole('button', { name: 'Start learning' }));
+  expect(screen.getByRole('heading', { name: 'Learning' })).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Back' }));
+  expect(screen.getByRole('heading', { name: 'Menu' })).toBeInTheDocument();
 
   fireEvent.click(screen.getByRole('button', { name: 'Change settings' }));
   expect(screen.getByRole('heading', { name: 'Change settings' })).toBeInTheDocument();
@@ -93,7 +100,7 @@ test('Log in submits credentials and shows the logged-in user', async () => {
   });
   fireEvent.submit(screen.getByRole('form', { name: 'Change settings form' }));
 
-  await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(2));
+  await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(3));
   expect(global.fetch).toHaveBeenLastCalledWith('http://localhost:8000/user/update', {
     method: 'PUT',
     headers: {
@@ -122,7 +129,7 @@ test('Log in submits credentials and shows the logged-in user', async () => {
   });
   fireEvent.submit(screen.getByRole('form', { name: 'Add new flashcard form' }));
 
-  await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(3));
+  await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(4));
   expect(global.fetch).toHaveBeenLastCalledWith('http://localhost:8000/flashcard/', {
     method: 'POST',
     headers: {
@@ -151,7 +158,7 @@ test('Log in submits credentials and shows the logged-in user', async () => {
   });
   fireEvent.submit(screen.getByRole('form', { name: 'Change password form' }));
 
-  await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(4));
+  await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(5));
   expect(global.fetch).toHaveBeenLastCalledWith('http://localhost:8000/user/update_pass', {
     method: 'PUT',
     headers: {
@@ -171,12 +178,34 @@ test('Log in submits credentials and shows the logged-in user', async () => {
   fireEvent.click(screen.getByRole('button', { name: 'Back' }));
   expect(screen.getByRole('heading', { name: 'Menu' })).toBeInTheDocument();
 
-  fireEvent.click(screen.getByRole('button', { name: 'Log out' }));
-  expect(global.fetch).toHaveBeenCalledTimes(4);
+  fireEvent.click(screen.getByRole('button', { name: 'Delete user' }));
+  expect(screen.getByRole('heading', { name: 'Delete user' })).toBeInTheDocument();
+  fireEvent.change(screen.getByLabelText('Current password'), {
+    target: { value: 'password123' },
+  });
+  fireEvent.change(screen.getByLabelText('Confirm current password'), {
+    target: { value: 'password123' },
+  });
+  fireEvent.submit(screen.getByRole('form', { name: 'Delete user form' }));
+
+  await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(6));
+  expect(global.fetch).toHaveBeenLastCalledWith('http://localhost:8000/user/delete', {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: 'Bearer token',
+    },
+    body: JSON.stringify({ old_password1: 'password123', old_password2: 'password123' }),
+  });
+  await waitFor(() => expect(screen.getByRole('heading', { name: 'Menu' })).toBeInTheDocument());
+  expect(screen.queryByText("Logged in as 'newuser'")).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Delete user' })).not.toBeInTheDocument();
   expect(localStorage.getItem('access_token')).toBeNull();
-  await waitFor(() => expect(
-    screen.queryByRole('button', { name: 'Log out' }),
-  ).not.toBeInTheDocument());
+
+  fireEvent.click(screen.getByRole('button', { name: 'Log in' }));
+  expect(screen.getByRole('heading', { name: 'Log in' })).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Back' }));
+  expect(screen.queryByRole('button', { name: 'Log out' })).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Log in' }));
   expect(screen.queryByText('Succesful log in')).not.toBeInTheDocument();
 

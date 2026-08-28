@@ -69,7 +69,7 @@ class UserAuth(BaseModel):
     login: str
     password: str
 
-# class for change settings and password
+# classes for change settings, change password and delete
 class UserChangeSet(BaseModel):
     flash_amount: int
     new_flash_amount: int
@@ -78,3 +78,7 @@ class UserChangePass(BaseModel):
     old_password: str
     new_password1: str = Field(pattern=r'^[A-Za-z0-9]+$')
     new_password2: str = Field(pattern=r'^[A-Za-z0-9]+$')
+
+class UserDelete(BaseModel):
+    old_password1: str
+    old_password2: str   
