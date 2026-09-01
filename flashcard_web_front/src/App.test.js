@@ -48,7 +48,12 @@ test('Log in submits credentials and shows the logged-in user', async () => {
   global.fetch = jest.fn().mockResolvedValue({
     status: 200,
     ok: true,
-    json: async () => ({ username: 'newuser', access_token: 'token' }),
+    json: async () => ({
+      username: 'newuser',
+      access_token: 'token',
+      flash_amount: 3,
+      new_flash_amount: 1,
+    }),
   });
 
   render(<App />);
@@ -87,6 +92,9 @@ test('Log in submits credentials and shows the logged-in user', async () => {
 
   fireEvent.click(screen.getByRole('button', { name: 'Start learning' }));
   expect(screen.getByRole('heading', { name: 'Learning' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Start session' })).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Start session' }));
+  expect(screen.getByText('Card 1 / 3')).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Back' }));
   expect(screen.getByRole('heading', { name: 'Menu' })).toBeInTheDocument();
 
@@ -208,6 +216,243 @@ test('Log in submits credentials and shows the logged-in user', async () => {
   expect(screen.queryByRole('button', { name: 'Log out' })).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Log in' }));
   expect(screen.queryByText('Succesful log in')).not.toBeInTheDocument();
+
+  global.fetch = originalFetch;
+});
+
+test('shows session completion prompt and lets the user start a new session or go back to menu', async () => {
+  const originalFetch = global.fetch;
+  global.fetch = jest.fn((url, options) => {
+    if (url === 'http://localhost:8000/login') {
+      return Promise.resolve({
+        status: 200,
+        ok: true,
+        json: async () => ({
+          username: 'newuser',
+          access_token: 'token',
+          user_id: 1,
+          flash_amount: 3,
+          new_flash_amount: 2,
+        }),
+      });
+    }
+
+    if (url === 'http://localhost:8000/learning/?is_new=true') {
+      const callCount = global.fetch.mock.calls.filter(
+        ([requestedUrl]) => requestedUrl === 'http://localhost:8000/learning/?is_new=true',
+      ).length;
+
+      return Promise.resolve({
+        ok: true,
+        json: async () => ({
+          flash_num: callCount,
+          pol: `word${callCount}`,
+          translate: `translation${callCount}`,
+          topic: 'greetings',
+        }),
+      });
+    }
+
+    if (url === 'http://localhost:8000/learning/?is_new=false') {
+      return Promise.resolve({
+        ok: true,
+        json: async () => ({
+          flash_num: 3,
+          pol: 'word3',
+          translate: 'translation3',
+          topic: 'greetings',
+        }),
+      });
+    }
+
+    if (url === 'http://localhost:8000/learning/answer') {
+      return Promise.resolve({
+        ok: true,
+        json: async () => ({
+          flash_num: 1,
+          pol: 'word1',
+          translate: 'translation1',
+          wage_change: -1,
+        }),
+      });
+    }
+
+    return Promise.resolve({
+      ok: true,
+      json: async () => ({}),
+    });
+  });
+
+  render(<App />);
+  fireEvent.click(screen.getByRole('button', { name: /start/i }));
+  fireEvent.click(screen.getByRole('button', { name: 'Log in' }));
+  fireEvent.change(screen.getByLabelText('Login'), {
+    target: { value: 'newuser' },
+  });
+  fireEvent.change(screen.getByLabelText('Password'), {
+    target: { value: 'password123' },
+  });
+  fireEvent.submit(screen.getByRole('form', { name: 'Log in form' }));
+
+  await waitFor(() => expect(screen.getByText("Logged in as 'newuser'")).toBeInTheDocument());
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+  });
+
+  fireEvent.click(screen.getByRole('button', { name: 'Start learning' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Start session' }));
+
+  await waitFor(() => expect(screen.getByText('word1')).toBeInTheDocument());
+  fireEvent.change(screen.getByLabelText('Translation'), {
+    target: { value: 'translation1' },
+  });
+  fireEvent.submit(screen.getByRole('form', { name: 'Learning form' }));
+
+  await waitFor(() => expect(screen.getByText('Correct answer.')).toBeInTheDocument());
+  fireEvent.click(screen.getByRole('button', { name: 'Next card' }));
+
+  await waitFor(() => expect(screen.getByText('word2')).toBeInTheDocument());
+  fireEvent.change(screen.getByLabelText('Translation'), {
+    target: { value: 'translation2' },
+  });
+  fireEvent.submit(screen.getByRole('form', { name: 'Learning form' }));
+
+  await waitFor(() => expect(screen.getByText('Correct answer.')).toBeInTheDocument());
+  fireEvent.click(screen.getByRole('button', { name: 'Next card' }));
+
+  await waitFor(() => expect(screen.getByText('word3')).toBeInTheDocument());
+  expect(global.fetch).toHaveBeenCalledWith('http://localhost:8000/learning/?is_new=false', {
+    headers: { Authorization: 'Bearer token' },
+  });
+
+  fireEvent.change(screen.getByLabelText('Translation'), {
+    target: { value: 'translation3' },
+  });
+  fireEvent.submit(screen.getByRole('form', { name: 'Learning form' }));
+
+  await waitFor(() => expect(screen.getByText('Session completed')).toBeInTheDocument());
+  expect(screen.getByText('Do you want to start next session?')).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Yes' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'No' })).toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole('button', { name: 'No' }));
+  expect(screen.getByRole('heading', { name: 'Menu' })).toBeInTheDocument();
+
+  global.fetch = originalFetch;
+});
+
+test('learning session starts with new cards and then switches to old cards', async () => {
+  const originalFetch = global.fetch;
+  global.fetch = jest.fn((url, options) => {
+    if (url === 'http://localhost:8000/login') {
+      return Promise.resolve({
+        status: 200,
+        ok: true,
+        json: async () => ({
+          username: 'newuser',
+          access_token: 'token',
+          user_id: 1,
+          flash_amount: 3,
+          new_flash_amount: 2,
+        }),
+      });
+    }
+
+    if (url === 'http://localhost:8000/learning/?is_new=true') {
+      const callCount = global.fetch.mock.calls.filter(
+        ([requestedUrl]) => requestedUrl === 'http://localhost:8000/learning/?is_new=true',
+      ).length;
+
+      return Promise.resolve({
+        ok: true,
+        json: async () => ({
+          flash_num: callCount,
+          pol: `word${callCount}`,
+          translate: `translation${callCount}`,
+          topic: 'greetings',
+        }),
+      });
+    }
+
+    if (url === 'http://localhost:8000/learning/?is_new=false') {
+      return Promise.resolve({
+        ok: true,
+        json: async () => ({
+          flash_num: 3,
+          pol: 'word3',
+          translate: 'translation3',
+          topic: 'greetings',
+        }),
+      });
+    }
+
+    if (url === 'http://localhost:8000/learning/answer') {
+      return Promise.resolve({
+        ok: true,
+        json: async () => ({
+          flash_num: 1,
+          pol: 'word1',
+          translate: 'translation1',
+          wage_change: -1,
+        }),
+      });
+    }
+
+    return Promise.resolve({
+      ok: true,
+      json: async () => ({}),
+    });
+  });
+
+  render(<App />);
+  fireEvent.click(screen.getByRole('button', { name: /start/i }));
+  fireEvent.click(screen.getByRole('button', { name: 'Log in' }));
+  fireEvent.change(screen.getByLabelText('Login'), {
+    target: { value: 'newuser' },
+  });
+  fireEvent.change(screen.getByLabelText('Password'), {
+    target: { value: 'password123' },
+  });
+  fireEvent.submit(screen.getByRole('form', { name: 'Log in form' }));
+
+  await waitFor(() => expect(screen.getByText("Logged in as 'newuser'")).toBeInTheDocument());
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+  });
+
+  fireEvent.click(screen.getByRole('button', { name: 'Start learning' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Start session' }));
+
+  await waitFor(() => expect(screen.getByText('word1')).toBeInTheDocument());
+  expect(global.fetch).toHaveBeenCalledWith('http://localhost:8000/learning/?is_new=true', {
+    headers: { Authorization: 'Bearer token' },
+  });
+
+  fireEvent.change(screen.getByLabelText('Translation'), {
+    target: { value: 'translation1' },
+  });
+  fireEvent.submit(screen.getByRole('form', { name: 'Learning form' }));
+
+  await waitFor(() => expect(screen.getByText('Correct answer.')).toBeInTheDocument());
+  fireEvent.click(screen.getByRole('button', { name: 'Next card' }));
+
+  await waitFor(() => expect(screen.getByText('word2')).toBeInTheDocument());
+  expect(global.fetch).toHaveBeenCalledWith('http://localhost:8000/learning/?is_new=true', {
+    headers: { Authorization: 'Bearer token' },
+  });
+
+  fireEvent.change(screen.getByLabelText('Translation'), {
+    target: { value: 'translation2' },
+  });
+  fireEvent.submit(screen.getByRole('form', { name: 'Learning form' }));
+
+  await waitFor(() => expect(screen.getByText('Correct answer.')).toBeInTheDocument());
+  fireEvent.click(screen.getByRole('button', { name: 'Next card' }));
+
+  await waitFor(() => expect(screen.getByText('word3')).toBeInTheDocument());
+  expect(global.fetch).toHaveBeenCalledWith('http://localhost:8000/learning/?is_new=false', {
+    headers: { Authorization: 'Bearer token' },
+  });
 
   global.fetch = originalFetch;
 });

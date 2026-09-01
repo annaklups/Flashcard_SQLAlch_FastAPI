@@ -39,6 +39,11 @@ function App() {
   const [learningCard, setLearningCard] = useState(null);
   const [learningAnswer, setLearningAnswer] = useState('');
   const [learningStatus, setLearningStatus] = useState('');
+  const [learningSessionStarted, setLearningSessionStarted] = useState(false);
+  const [learningSessionCompleted, setLearningSessionCompleted] = useState(false);
+  const [sessionFlashAmount, setSessionFlashAmount] = useState(20);
+  const [sessionNewFlashAmount, setSessionNewFlashAmount] = useState(5);
+  const [sessionCardNumber, setSessionCardNumber] = useState(1);
 
   useEffect(() => {
     if (loginStatus !== 'Succesful log in') {
@@ -104,8 +109,18 @@ function App() {
         throw new Error(responseBody.detail || 'Unable to log in.');
       }
 
+      const userFlashAmount = Number(responseBody.flash_amount ?? settingsForm.flash_amount ?? 20);
+      const userNewFlashAmount = Number(responseBody.new_flash_amount ?? settingsForm.new_flash_amount ?? 5);
+
       setLoggedInUser(responseBody.username);
       setLoggedInUserId(responseBody.user_id);
+      setSessionFlashAmount(userFlashAmount);
+      setSessionNewFlashAmount(userNewFlashAmount);
+      setSettingsForm((currentForm) => ({
+        ...currentForm,
+        flash_amount: userFlashAmount,
+        new_flash_amount: userNewFlashAmount,
+      }));
       localStorage.setItem('access_token', responseBody.access_token);
       setLoginStatus('Succesful log in');
     } catch (error) {
@@ -141,6 +156,8 @@ function App() {
       }
 
       setSettingsStatus('Settings changed successfully.');
+      setSessionFlashAmount(Number(settingsForm.flash_amount));
+      setSessionNewFlashAmount(Number(settingsForm.new_flash_amount));
     } catch (error) {
       setSettingsStatus(error.message);
     }
@@ -252,13 +269,14 @@ function App() {
     }
   };
 
-  const loadLearningCard = async () => {
+  const loadLearningCard = async (isNewCard = true) => {
     setLearningStatus('');
     setLearningCard(null);
     setLearningAnswer('');
+    setLearningSessionStarted(true);
 
     try {
-      const response = await fetch('http://localhost:8000/learning/?is_new=true', {
+      const response = await fetch(`http://localhost:8000/learning/?is_new=${isNewCard}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('access_token')}`,
         },
@@ -299,6 +317,18 @@ function App() {
         throw new Error(responseBody.detail || 'Unable to check the answer.');
       }
 
+      const isFinalCard = sessionCardNumber >= sessionFlashAmount;
+
+      if (isFinalCard) {
+        setLearningSessionStarted(false);
+        setLearningSessionCompleted(true);
+        setSessionCardNumber(sessionFlashAmount);
+        setLearningCard(null);
+        setLearningAnswer('');
+        setLearningStatus('');
+        return;
+      }
+
       setLearningStatus(
         responseBody.wage_change === -1
           ? 'Correct answer.'
@@ -309,6 +339,43 @@ function App() {
     } catch (error) {
       setLearningStatus(error.message);
     }
+  };
+
+  const handleLearningSessionStart = () => {
+    setLearningSessionCompleted(false);
+    setSessionCardNumber(1);
+    setLearningStatus('');
+    setLearningAnswer('');
+    setLearningSessionStarted(true);
+    loadLearningCard(1 <= sessionNewFlashAmount);
+  };
+
+  const handleNextLearningCard = () => {
+    const nextCardNumber = sessionCardNumber + 1;
+
+    if (nextCardNumber > sessionFlashAmount) {
+      setLearningSessionStarted(false);
+      setLearningSessionCompleted(true);
+      setLearningCard(null);
+      setLearningAnswer('');
+      setLearningStatus('');
+      setSessionCardNumber(sessionFlashAmount);
+      return;
+    }
+
+    setSessionCardNumber(nextCardNumber);
+    loadLearningCard(nextCardNumber <= sessionNewFlashAmount);
+  };
+
+  const handleLearningSessionRestart = () => {
+    setLearningSessionCompleted(false);
+    setLearningSessionStarted(false);
+    setSessionCardNumber(1);
+    setLearningStatus('');
+    setLearningCard(null);
+    setLearningAnswer('');
+    setPage('learning');
+    setTimeout(() => handleLearningSessionStart(), 0);
   };
 
   return (
@@ -408,8 +475,12 @@ function App() {
                   className="Menu-button"
                   type="button"
                   onClick={() => {
+                    setLearningStatus('');
+                    setLearningCard(null);
+                    setLearningAnswer('');
+                    setLearningSessionStarted(false);
+                    setSessionCardNumber(1);
                     setPage('learning');
-                    loadLearningCard();
                   }}
                 >
                   Start learning
@@ -439,6 +510,35 @@ function App() {
         ) : page === 'learning' ? (
           <>
             <h1>Learning</h1>
+            {!learningSessionStarted && !learningSessionCompleted && !learningCard && !learningStatus && (
+              <button className="Menu-button" type="button" onClick={handleLearningSessionStart}>
+                Start session
+              </button>
+            )}
+            {learningSessionCompleted && (
+              <>
+                <p>Session completed</p>
+                <p>Do you want to start next session?</p>
+                <button className="Menu-button" type="button" onClick={handleLearningSessionRestart}>
+                  Yes
+                </button>
+                <button
+                  className="Back-button"
+                  type="button"
+                  onClick={() => {
+                    setLearningSessionCompleted(false);
+                    setLearningSessionStarted(false);
+                    setSessionCardNumber(1);
+                    setPage('menu');
+                  }}
+                >
+                  No
+                </button>
+              </>
+            )}
+            {learningSessionStarted && !learningSessionCompleted && (
+              <p>Card {sessionCardNumber} / {sessionFlashAmount}</p>
+            )}
             {learningCard && (
               <form
                 className="Learning-form"
@@ -461,17 +561,23 @@ function App() {
                 </button>
               </form>
             )}
-            {!learningCard && !learningStatus && <p>Loading flashcard...</p>}
+            {!learningCard && learningSessionStarted && !learningStatus && (
+              <p>Loading flashcard...</p>
+            )}
             {learningStatus && <p role="status">{learningStatus}</p>}
-            {!learningCard && learningStatus && (
-              <button className="Menu-button" type="button" onClick={loadLearningCard}>
+            {!learningCard && learningStatus && !learningSessionCompleted && (
+              <button className="Menu-button" type="button" onClick={handleNextLearningCard}>
                 Next card
               </button>
             )}
             <button
               className="Back-button"
               type="button"
-              onClick={() => setPage('menu')}
+              onClick={() => {
+                setLearningSessionStarted(false);
+                setSessionCardNumber(1);
+                setPage('menu');
+              }}
             >
               Back
             </button>

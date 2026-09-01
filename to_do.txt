@@ -14,10 +14,8 @@ DONE - add buttons and connect functions to it:
     - change settings
     - change password
     - delete user    
-
-
-- add buttons and connect functions to it:    
     - learning mode
+
 - add messages for errors eg. Incorrect password, flahcards exist in db, user with this login exist in db etc.
 - test:
     - create new flashcard

@@ -24,7 +24,9 @@ def login(request: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(
         'access_token': access_token,
         'token_type': 'bearer',
         'user_id': user.user_num,
-        'username': user.login
+        'username': user.login,
+        'flash_amount': user.flash_amount,
+        'new_flash_amount': user.new_flash_amount
     }
 
 # request w odpowiedniej klasie - to jest login i hasło, które wysyła użytkownik
