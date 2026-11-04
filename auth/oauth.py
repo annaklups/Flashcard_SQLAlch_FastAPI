@@ -7,6 +7,7 @@ from datetime import datetime, timedelta, timezone
 
 from db.database import get_db
 from db import db_user_functions
+from db.models import DbUser
 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
@@ -49,3 +50,8 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
         raise credentials_exception
     # sprawdzenie czy user nadal jest w db, a nie został np. w między czasie usunięty
     return user
+
+def require_admin(current_user: DbUser = Depends(get_current_user)):
+    if current_user.role != "admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")
+    return current_user

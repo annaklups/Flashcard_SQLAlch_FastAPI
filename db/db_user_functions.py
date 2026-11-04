@@ -16,7 +16,8 @@ def create_user(db: Session, request: UserBase):
         login = request.login, 
         password = Hash.bcrypt(request.password), 
         flash_amount = request.flash_amount, 
-        new_flash_amount = request.new_flash_amount)
+        new_flash_amount = request.new_flash_amount,
+        role = 'user')
     db.add(new_user)
     db.commit()
     db.refresh(new_user)

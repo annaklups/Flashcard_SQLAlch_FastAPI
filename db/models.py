@@ -13,6 +13,7 @@ class DbUser(Base):
     password: Mapped[str] = mapped_column(String(20))
     flash_amount: Mapped[int] = mapped_column(Integer)
     new_flash_amount: Mapped[int] = mapped_column(Integer)
+    role: Mapped[str] = mapped_column(String(5), default='user')
     wages_user: Mapped[List["DbWage"]] = relationship(
         back_populates ='scores_user', cascade="all, delete-orphan")
 

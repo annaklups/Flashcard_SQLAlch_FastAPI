@@ -1,0 +1,36 @@
+Your app currently has **authentication**, but not role-based authorization. `get_current_user()` verifies the token and looks up the user, but there’s no role or admin check. The user table has no role field either (`models.py:6-18`, `oauth.py:31-50`).
+
+### A practical approach
+
+1. **Add a role to the user record**, such as `role = "user"` or `role = "admin"`. Give new registrations the regular-user role by default. Don’t accept a role from the public registration request—otherwise anyone could register as an admin.
+2. **Create an admin-only dependency** that checks the current user’s role and returns HTTP 403 if they’re not an admin. Your existing dependency already retrieves the user from the database, so you can check the current database role on each request. That also means a role change takes effect without waiting for a token to expire.
+3. **Apply authorization to each endpoint**, not just the admin UI. For example, listing all users and creating or deleting flashcards should likely require an admin. Users should only change or delete their own account; admins can be given separate routes for managing other users.
+4. **Use the role in the frontend only to control what’s displayed.** Hiding admin buttons is useful for the user experience, but the backend must still reject unauthorized requests.
+
+A dependency could look like this:
+
+```python
+from fastapi import Depends, HTTPException, status
+from db.models import DbUser
+from auth.oauth import get_current_user
+
+def require_admin(
+    current_user: DbUser = Depends(get_current_user),
+) -> DbUser:
+    if current_user.role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access required",
+        )
+    return current_user
+```
+
+Then add `admin: DbUser = Depends(require_admin)` to protected route functions. For example, the current “get all users” and user-by-ID routes have no authorization dependency (`user.py:17-23`). Flashcard creation and deletion are also currently unprotected (`flashcard.py:14-31`).
+
+### Important security issues to address
+
+- The routes that update or delete a user by ID currently don’t require authentication. A caller could target another account (`user.py:25-34`).
+- The answer endpoint accepts `user_num` in the request body and has no authentication dependency. A caller could submit an answer for another user; derive the user ID from the authenticated user instead (`learning.py:22-28`).
+- `UserDisplay` includes `password`, and it’s used for user responses. Remove that field from response schemas—password hashes should never be sent to clients (`schemas.py:12-20`).
+
+One migration detail: `create_all()` creates missing tables, but it does not add a new column to an existing table (`main.py:23`). If your database already exists, you’ll need a schema migration or another deliberate way to add and populate the role field. Also, create the first admin through a controlled setup or database migration—not through public registration.

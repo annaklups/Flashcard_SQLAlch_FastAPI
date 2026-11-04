@@ -23,6 +23,7 @@ class UserDisplay(BaseModel):
     password: str
     flash_amount: int
     new_flash_amount: int
+    role: str    
     wages_user: List[Wages]
     class Config():
         orm_mode = True
