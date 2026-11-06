@@ -1,10 +1,13 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, File, UploadFile
 from sqlalchemy.orm import Session
 from typing import List
+from csv import reader
 
 from db.database import get_db
 from db import db_flashcard_functions
 from schemas import FlashcardBase, FlashcardDisplay
+from auth.oauth import require_admin
+from db.models import DbUser
 
 router = APIRouter(
     prefix = '/flashcard',
@@ -30,3 +33,12 @@ def get_flashcard(flash_num: int, db: Session = Depends(get_db)):
 @router.delete('/delete/{flash_num}')
 def delete_flashcard(flash_num: int, db: Session = Depends(get_db)):
     return db_flashcard_functions.delete_flashcard(db, flash_num)
+
+# Upload csv file for to add flashcards in bunch to db
+@router.post('/uploadfile')
+def get_upload_file(upload_file: UploadFile = File(...), db: Session = Depends(get_db), admin: DbUser = Depends(require_admin)):
+    csv_reader = reader(TextIOWrapper(upload_file.file, encoding='utf-8-sig', newline=''))
+    for line in csv_reader:
+        flashcard = FlashcardBase(pol=line[0], translate=line[1], topic=line[2])
+        db_flashcard_functions.create_flashcard(db, flashcard)
+    return 'ok'

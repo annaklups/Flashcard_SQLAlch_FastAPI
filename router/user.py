@@ -46,6 +46,11 @@ def update_user_password(request: UserChangePass, user_num: int, db: Session = D
 def update_current_user_password(request: UserChangePass, db: Session = Depends(get_db), current_user: UserAuth = Depends(get_current_user)):
     return db_user_functions.update_user_password(db, current_user.user_num, request)
 
+# Update user role to admin
+@router.put('/update_role')
+def update_user_role(user_num: int, db: Session = Depends(get_db), admin: DbUser = Depends(require_admin)):
+    return db_user_functions.update_user_role(db, user_num)
+
 # Delete user
 @router.delete('/delete/{user_num}')
 def delete_user(user_num: int, db: Session = Depends(get_db), admin: DbUser = Depends(require_admin)):

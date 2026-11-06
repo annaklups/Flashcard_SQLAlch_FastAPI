@@ -21,6 +21,7 @@ test('Start button opens the Menu page', () => {
   expect(screen.queryByRole('button', { name: 'Delete user' })).not.toBeInTheDocument();
   expect(screen.queryByRole('button', { name: 'Add new flashcard' })).not.toBeInTheDocument();
   expect(screen.queryByRole('button', { name: 'Start learning' })).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Admin mode' })).not.toBeInTheDocument();
 
   fireEvent.click(screen.getByRole('button', { name: 'Back' }));
 
@@ -88,6 +89,7 @@ test('Log in submits credentials and shows the logged-in user', async () => {
   expect(screen.getByRole('button', { name: 'Delete user' })).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Add new flashcard' })).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Start learning' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Admin mode' })).toBeInTheDocument();
   expect(localStorage.getItem('access_token')).toBe('token');
 
   fireEvent.click(screen.getByRole('button', { name: 'Start learning' }));
@@ -216,6 +218,115 @@ test('Log in submits credentials and shows the logged-in user', async () => {
   expect(screen.queryByRole('button', { name: 'Log out' })).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Log in' }));
   expect(screen.queryByText('Succesful log in')).not.toBeInTheDocument();
+
+  global.fetch = originalFetch;
+});
+
+test('Admin mode calls the user administration and flashcard upload endpoints', async () => {
+  const originalFetch = global.fetch;
+  global.fetch = jest.fn().mockImplementation(async (url) => ({
+    status: 200,
+    ok: true,
+    json: async () => (
+      url === 'http://localhost:8000/login'
+        ? {
+          username: 'admin',
+          user_id: 1,
+          access_token: 'admin-token',
+          flash_amount: 3,
+          new_flash_amount: 1,
+        }
+        : 'ok'
+    ),
+  }));
+
+  render(<App />);
+  fireEvent.click(screen.getByRole('button', { name: /start/i }));
+  fireEvent.click(screen.getByRole('button', { name: 'Log in' }));
+  fireEvent.change(screen.getByLabelText('Login'), { target: { value: 'admin' } });
+  fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'password123' } });
+  fireEvent.submit(screen.getByRole('form', { name: 'Log in form' }));
+  await screen.findByText("Logged in as 'admin'");
+  fireEvent.click(screen.getByRole('button', { name: 'Back' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Admin mode' }));
+
+  expect(screen.getByRole('button', { name: 'Update user settings' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Update user password' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Promote user to admin' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Delete user' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Upload flashcards CSV' })).toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole('button', { name: 'Update user settings' }));
+  fireEvent.change(screen.getByLabelText('Target user ID'), { target: { value: '7' } });
+  fireEvent.change(screen.getByLabelText('Flashcards amount'), { target: { value: '30' } });
+  fireEvent.change(screen.getByLabelText('New flashcards amount'), { target: { value: '10' } });
+  fireEvent.submit(screen.getByRole('form', { name: 'Admin settings form' }));
+  await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(2));
+  expect(global.fetch).toHaveBeenLastCalledWith('http://localhost:8000/user/update/7', {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: 'Bearer admin-token',
+    },
+    body: JSON.stringify({ flash_amount: 30, new_flash_amount: 10 }),
+  });
+
+  fireEvent.click(screen.getByRole('button', { name: 'Back' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Update user password' }));
+  fireEvent.change(screen.getByLabelText('Target user ID'), { target: { value: '7' } });
+  fireEvent.change(screen.getByLabelText('Current password'), { target: { value: 'oldpass' } });
+  fireEvent.change(screen.getByLabelText('New password'), { target: { value: 'newpass' } });
+  fireEvent.change(screen.getByLabelText('Confirm new password'), { target: { value: 'newpass' } });
+  fireEvent.submit(screen.getByRole('form', { name: 'Admin password form' }));
+  await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(3));
+  expect(global.fetch).toHaveBeenLastCalledWith('http://localhost:8000/user/update_pass/7', {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: 'Bearer admin-token',
+    },
+    body: JSON.stringify({
+      old_password: 'oldpass',
+      new_password1: 'newpass',
+      new_password2: 'newpass',
+    }),
+  });
+
+  fireEvent.click(screen.getByRole('button', { name: 'Back' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Promote user to admin' }));
+  fireEvent.change(screen.getByLabelText('Target user ID'), { target: { value: '7' } });
+  fireEvent.submit(screen.getByRole('form', { name: 'Admin role form' }));
+  await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(4));
+  expect(global.fetch).toHaveBeenLastCalledWith(
+    'http://localhost:8000/user/update_role?user_num=7',
+    {
+      method: 'PUT',
+      headers: { Authorization: 'Bearer admin-token' },
+    },
+  );
+
+  fireEvent.click(screen.getByRole('button', { name: 'Back' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Delete user' }));
+  fireEvent.change(screen.getByLabelText('Target user ID'), { target: { value: '7' } });
+  fireEvent.submit(screen.getByRole('form', { name: 'Admin delete form' }));
+  await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(5));
+  expect(global.fetch).toHaveBeenLastCalledWith('http://localhost:8000/user/delete/7', {
+    method: 'DELETE',
+    headers: { Authorization: 'Bearer admin-token' },
+  });
+
+  fireEvent.click(screen.getByRole('button', { name: 'Back' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Upload flashcards CSV' }));
+  const csvFile = new File(['word,translation,topic'], 'flashcards.csv', { type: 'text/csv' });
+  fireEvent.change(screen.getByLabelText('CSV file'), { target: { files: [csvFile] } });
+  fireEvent.submit(screen.getByRole('form', { name: 'Admin upload form' }));
+  await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(6));
+
+  const [uploadUrl, uploadOptions] = global.fetch.mock.calls[5];
+  expect(uploadUrl).toBe('http://localhost:8000/flashcard/uploadfile');
+  expect(uploadOptions.method).toBe('POST');
+  expect(uploadOptions.headers).toEqual({ Authorization: 'Bearer admin-token' });
+  expect(uploadOptions.body.get('upload_file').name).toBe('flashcards.csv');
 
   global.fetch = originalFetch;
 });

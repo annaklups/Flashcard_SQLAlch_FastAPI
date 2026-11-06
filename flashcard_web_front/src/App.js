@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 
 function App() {
   const [page, setPage] = useState('home');
+  const getAdminAuthorization = () => `Bearer ${localStorage.getItem('access_token')}`;
   const [createUserForm, setCreateUserForm] = useState({
     login: '',
     password: '',
@@ -36,6 +37,18 @@ function App() {
     old_password2: '',
   });
   const [deleteUserStatus, setDeleteUserStatus] = useState('');
+  const [adminUserId, setAdminUserId] = useState('');
+  const [adminSettingsForm, setAdminSettingsForm] = useState({
+    flash_amount: 20,
+    new_flash_amount: 5,
+  });
+  const [adminPasswordForm, setAdminPasswordForm] = useState({
+    old_password: '',
+    new_password1: '',
+    new_password2: '',
+  });
+  const [adminUploadFile, setAdminUploadFile] = useState(null);
+  const [adminStatus, setAdminStatus] = useState('');
   const [learningCard, setLearningCard] = useState(null);
   const [learningAnswer, setLearningAnswer] = useState('');
   const [learningStatus, setLearningStatus] = useState('');
@@ -269,6 +282,164 @@ function App() {
     }
   };
 
+  const handleAdminUserIdChange = (event) => {
+    setAdminUserId(event.target.value);
+  };
+
+  const handleAdminSettingsChange = (event) => {
+    const { name, value } = event.target;
+    setAdminSettingsForm((currentForm) => ({
+      ...currentForm,
+      [name]: Number(value),
+    }));
+  };
+
+  const handleAdminSettingsSubmit = async (event) => {
+    event.preventDefault();
+    setAdminStatus('');
+
+    try {
+      const response = await fetch(`http://localhost:8000/user/update/${adminUserId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: getAdminAuthorization(),
+        },
+        body: JSON.stringify(adminSettingsForm),
+      });
+      const responseBody = await response.json();
+
+      if (!response.ok) {
+        throw new Error(responseBody.detail || 'Unable to change user settings.');
+      }
+
+      setAdminStatus('User settings changed successfully.');
+    } catch (error) {
+      setAdminStatus(error.message);
+    }
+  };
+
+  const handleAdminPasswordChange = (event) => {
+    const { name, value } = event.target;
+    setAdminPasswordForm((currentForm) => ({
+      ...currentForm,
+      [name]: value,
+    }));
+  };
+
+  const handleAdminPasswordSubmit = async (event) => {
+    event.preventDefault();
+    setAdminStatus('');
+
+    if (adminPasswordForm.new_password1 !== adminPasswordForm.new_password2) {
+      setAdminStatus('Passwords do not match.');
+      return;
+    }
+
+    try {
+      const response = await fetch(`http://localhost:8000/user/update_pass/${adminUserId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: getAdminAuthorization(),
+        },
+        body: JSON.stringify(adminPasswordForm),
+      });
+      const responseBody = await response.json();
+
+      if (!response.ok) {
+        throw new Error(responseBody.detail || 'Unable to change user password.');
+      }
+
+      setAdminStatus('User password changed successfully.');
+      setAdminPasswordForm({ old_password: '', new_password1: '', new_password2: '' });
+    } catch (error) {
+      setAdminStatus(error.message);
+    }
+  };
+
+  const handleAdminRoleSubmit = async (event) => {
+    event.preventDefault();
+    setAdminStatus('');
+
+    try {
+      const response = await fetch(
+        `http://localhost:8000/user/update_role?user_num=${encodeURIComponent(adminUserId)}`,
+        {
+          method: 'PUT',
+          headers: {
+            Authorization: getAdminAuthorization(),
+          },
+        },
+      );
+      const responseBody = await response.json();
+
+      if (!response.ok) {
+        throw new Error(responseBody.detail || 'Unable to promote user.');
+      }
+
+      setAdminStatus('User promoted to admin successfully.');
+    } catch (error) {
+      setAdminStatus(error.message);
+    }
+  };
+
+  const handleAdminDeleteSubmit = async (event) => {
+    event.preventDefault();
+    setAdminStatus('');
+
+    try {
+      const response = await fetch(`http://localhost:8000/user/delete/${adminUserId}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: getAdminAuthorization(),
+        },
+      });
+      const responseBody = await response.json();
+
+      if (!response.ok) {
+        throw new Error(responseBody.detail || 'Unable to delete user.');
+      }
+
+      setAdminStatus('User deleted successfully.');
+    } catch (error) {
+      setAdminStatus(error.message);
+    }
+  };
+
+  const handleAdminUploadSubmit = async (event) => {
+    event.preventDefault();
+    setAdminStatus('');
+
+    if (!adminUploadFile) {
+      setAdminStatus('Select a CSV file to upload.');
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append('upload_file', adminUploadFile);
+      const response = await fetch('http://localhost:8000/flashcard/uploadfile', {
+        method: 'POST',
+        headers: {
+          Authorization: getAdminAuthorization(),
+        },
+        body: formData,
+      });
+      const responseBody = await response.json();
+
+      if (!response.ok) {
+        throw new Error(responseBody.detail || 'Unable to upload flashcards.');
+      }
+
+      setAdminStatus('Flashcards uploaded successfully.');
+      setAdminUploadFile(null);
+      event.currentTarget.reset();
+    } catch (error) {
+      setAdminStatus(error.message);
+    }
+  };
+
   const loadLearningCard = async (isNewCard = true) => {
     setLearningStatus('');
     setLearningCard(null);
@@ -489,6 +660,16 @@ function App() {
                   className="Menu-button"
                   type="button"
                   onClick={() => {
+                    setAdminStatus('');
+                    setPage('admin-mode');
+                  }}
+                >
+                  Admin mode
+                </button>
+                <button
+                  className="Menu-button"
+                  type="button"
+                  onClick={() => {
                     localStorage.removeItem('access_token');
                     setLoggedInUser('');
                     setLoggedInUserId(null);
@@ -507,6 +688,241 @@ function App() {
               Back
             </button>
           </>
+        ) : page === 'admin-mode' ? (
+              <>
+                <h1>Admin mode</h1>
+                <button className="Menu-button" type="button" onClick={() => {
+                  setAdminStatus('');
+                  setPage('admin-settings');
+                }}>
+                  Update user settings
+                </button>
+                <button className="Menu-button" type="button" onClick={() => {
+                  setAdminStatus('');
+                  setPage('admin-password');
+                }}>
+                  Update user password
+                </button>
+                <button className="Menu-button" type="button" onClick={() => {
+                  setAdminStatus('');
+                  setPage('admin-role');
+                }}>
+                  Promote user to admin
+                </button>
+                <button className="Menu-button" type="button" onClick={() => {
+                  setAdminStatus('');
+                  setPage('admin-delete');
+                }}>
+                  Delete user
+                </button>
+                <button className="Menu-button" type="button" onClick={() => {
+                  setAdminStatus('');
+                  setPage('admin-upload');
+                }}>
+                  Upload flashcards CSV
+                </button>
+                <button
+                  className="Back-button"
+                  type="button"
+                  onClick={() => setPage('menu')}
+                >
+                  Back
+                </button>
+              </>
+        ) : page === 'admin-settings' ? (
+              <>
+                <h1>Update user settings</h1>
+                <form
+                  className="Settings-form"
+                  aria-label="Admin settings form"
+                  onSubmit={handleAdminSettingsSubmit}
+                >
+                  <label>
+                    Target user ID
+                    <input
+                      name="user_num"
+                      type="number"
+                      min="1"
+                      required
+                      value={adminUserId}
+                      onChange={handleAdminUserIdChange}
+                    />
+                  </label>
+                  <label>
+                    Flashcards amount
+                    <input
+                      name="flash_amount"
+                      type="number"
+                      min="1"
+                      required
+                      value={adminSettingsForm.flash_amount}
+                      onChange={handleAdminSettingsChange}
+                    />
+                  </label>
+                  <label>
+                    New flashcards amount
+                    <input
+                      name="new_flash_amount"
+                      type="number"
+                      min="0"
+                      required
+                      value={adminSettingsForm.new_flash_amount}
+                      onChange={handleAdminSettingsChange}
+                    />
+                  </label>
+                  <button className="Menu-button Settings-submit" type="submit">
+                    Save user settings
+                  </button>
+                </form>
+                {adminStatus && <p role="status">{adminStatus}</p>}
+                <button className="Back-button" type="button" onClick={() => setPage('admin-mode')}>
+                  Back
+                </button>
+              </>
+        ) : page === 'admin-password' ? (
+              <>
+                <h1>Update user password</h1>
+                <form
+                  className="Password-form"
+                  aria-label="Admin password form"
+                  onSubmit={handleAdminPasswordSubmit}
+                >
+                  <label>
+                    Target user ID
+                    <input
+                      name="user_num"
+                      type="number"
+                      min="1"
+                      required
+                      value={adminUserId}
+                      onChange={handleAdminUserIdChange}
+                    />
+                  </label>
+                  <label>
+                    Current password
+                    <input
+                      name="old_password"
+                      type="password"
+                      required
+                      value={adminPasswordForm.old_password}
+                      onChange={handleAdminPasswordChange}
+                    />
+                  </label>
+                  <label>
+                    New password
+                    <input
+                      name="new_password1"
+                      type="password"
+                      pattern="[A-Za-z0-9]+"
+                      required
+                      value={adminPasswordForm.new_password1}
+                      onChange={handleAdminPasswordChange}
+                    />
+                  </label>
+                  <label>
+                    Confirm new password
+                    <input
+                      name="new_password2"
+                      type="password"
+                      pattern="[A-Za-z0-9]+"
+                      required
+                      value={adminPasswordForm.new_password2}
+                      onChange={handleAdminPasswordChange}
+                    />
+                  </label>
+                  <button className="Menu-button Password-submit" type="submit">
+                    Save user password
+                  </button>
+                </form>
+                {adminStatus && <p role="status">{adminStatus}</p>}
+                <button className="Back-button" type="button" onClick={() => setPage('admin-mode')}>
+                  Back
+                </button>
+              </>
+        ) : page === 'admin-role' ? (
+              <>
+                <h1>Promote user to admin</h1>
+                <form
+                  className="Settings-form"
+                  aria-label="Admin role form"
+                  onSubmit={handleAdminRoleSubmit}
+                >
+                  <label>
+                    Target user ID
+                    <input
+                      name="user_num"
+                      type="number"
+                      min="1"
+                      required
+                      value={adminUserId}
+                      onChange={handleAdminUserIdChange}
+                    />
+                  </label>
+                  <button className="Menu-button" type="submit">
+                    Promote user
+                  </button>
+                </form>
+                {adminStatus && <p role="status">{adminStatus}</p>}
+                <button className="Back-button" type="button" onClick={() => setPage('admin-mode')}>
+                  Back
+                </button>
+              </>
+        ) : page === 'admin-delete' ? (
+              <>
+                <h1>Delete user</h1>
+                <p>This permanently deletes the selected user.</p>
+                <form
+                  className="Settings-form"
+                  aria-label="Admin delete form"
+                  onSubmit={handleAdminDeleteSubmit}
+                >
+                  <label>
+                    Target user ID
+                    <input
+                      name="user_num"
+                      type="number"
+                      min="1"
+                      required
+                      value={adminUserId}
+                      onChange={handleAdminUserIdChange}
+                    />
+                  </label>
+                  <button className="Menu-button" type="submit">
+                    Delete user
+                  </button>
+                </form>
+                {adminStatus && <p role="status">{adminStatus}</p>}
+                <button className="Back-button" type="button" onClick={() => setPage('admin-mode')}>
+                  Back
+                </button>
+              </>
+        ) : page === 'admin-upload' ? (
+              <>
+                <h1>Upload flashcards CSV</h1>
+                <form
+                  className="Flashcard-form"
+                  aria-label="Admin upload form"
+                  onSubmit={handleAdminUploadSubmit}
+                >
+                  <label>
+                    CSV file
+                    <input
+                      name="upload_file"
+                      type="file"
+                      accept=".csv,text/csv"
+                      required
+                      onChange={(event) => setAdminUploadFile(event.target.files[0] || null)}
+                    />
+                  </label>
+                  <button className="Menu-button Flashcard-submit" type="submit">
+                    Upload flashcards
+                  </button>
+                </form>
+                {adminStatus && <p role="status">{adminStatus}</p>}
+                <button className="Back-button" type="button" onClick={() => setPage('admin-mode')}>
+                  Back
+                </button>
+              </>
         ) : page === 'learning' ? (
           <>
             <h1>Learning</h1>
