@@ -82,4 +82,8 @@ class UserChangePass(BaseModel):
 
 class UserDelete(BaseModel):
     old_password1: str
-    old_password2: str   
+    old_password2: str
+
+class AdminChangePass(BaseModel):
+    new_password1: str = Field(pattern=r'^[A-Za-z0-9]+$')
+    new_password2: str = Field(pattern=r'^[A-Za-z0-9]+$')

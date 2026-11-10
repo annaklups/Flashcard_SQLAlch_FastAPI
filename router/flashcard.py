@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, File, UploadFile
 from sqlalchemy.orm import Session
 from typing import List
 from csv import reader
+import io
 
 from db.database import get_db
 from db import db_flashcard_functions
@@ -37,8 +38,11 @@ def delete_flashcard(flash_num: int, db: Session = Depends(get_db)):
 # Upload csv file for to add flashcards in bunch to db
 @router.post('/uploadfile')
 def get_upload_file(upload_file: UploadFile = File(...), db: Session = Depends(get_db), admin: DbUser = Depends(require_admin)):
-    csv_reader = reader(TextIOWrapper(upload_file.file, encoding='utf-8-sig', newline=''))
-    for line in csv_reader:
+    csv_text = upload_file.file.read().decode('utf-8-sig')
+    csv_content = reader(io.StringIO(csv_text, newline=''))
+    counter = 0
+    for line in csv_content:
         flashcard = FlashcardBase(pol=line[0], translate=line[1], topic=line[2])
         db_flashcard_functions.create_flashcard(db, flashcard)
-    return 'ok'
+        counter += 1 
+    return {'uploaded flashcards': counter}

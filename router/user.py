@@ -29,33 +29,16 @@ def get_user(user_num: int, db: Session = Depends(get_db)):
     return db_user_functions.get_user(db, user_num)
 
 # Update user settings
-@router.put('/update/{user_num}')
-def update_user_settings(request: UserChangeSet, user_num: int, db: Session = Depends(get_db), admin: DbUser = Depends(require_admin)):
-    return db_user_functions.update_user_settings(db, user_num, request)
-
 @router.put('/update')
 def update_current_user_settings(request: UserChangeSet, db: Session = Depends(get_db), current_user: UserAuth = Depends(get_current_user)):
     return db_user_functions.update_user_settings(db, current_user.user_num, request)
 
 # Update user password
-@router.put('/update_pass/{user_num}')
-def update_user_password(request: UserChangePass, user_num: int, db: Session = Depends(get_db), admin: DbUser = Depends(require_admin)):
-    return db_user_functions.update_user_password(db, user_num, request)
-
 @router.put('/update_pass')
 def update_current_user_password(request: UserChangePass, db: Session = Depends(get_db), current_user: UserAuth = Depends(get_current_user)):
     return db_user_functions.update_user_password(db, current_user.user_num, request)
 
-# Update user role to admin
-@router.put('/update_role')
-def update_user_role(user_num: int, db: Session = Depends(get_db), admin: DbUser = Depends(require_admin)):
-    return db_user_functions.update_user_role(db, user_num)
-
 # Delete user
-@router.delete('/delete/{user_num}')
-def delete_user(user_num: int, db: Session = Depends(get_db), admin: DbUser = Depends(require_admin)):
-    return db_user_functions.delete_user(db, user_num)
-
 @router.delete('/delete')
 def delete_current_user(user_request: UserDelete, db: Session = Depends(get_db), current_user: UserAuth = Depends(get_current_user)):
     return db_user_functions.delete_user(db, current_user.user_num, user_request)

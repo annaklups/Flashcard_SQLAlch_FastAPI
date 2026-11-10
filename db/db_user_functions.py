@@ -82,17 +82,6 @@ def update_user_password(db: Session, user_num: int, request: UserChangePass):
             detail=f"New passwords are not matching")
     return 'ok'
 
-def update_user_role(db: Session, user_num: int):
-    """Change user role to admin"""
-    user = db.scalars(select(DbUser).filter_by(user_num = user_num)).first()
-    if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"User with user_num {user_num} not found")
-    db.execute(update(DbUser).where(DbUser.user_num == user_num).values(
-        role='admin'))      
-    db.commit()
-    return 'ok'
-
 def delete_user(db: Session, user_num: int, user_request: UserDelete):
     """Deleting user and all its data from db"""
     user = db.scalars(select(DbUser).filter_by(user_num = user_num)).first()
