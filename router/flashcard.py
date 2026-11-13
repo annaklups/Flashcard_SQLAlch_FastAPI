@@ -30,6 +30,11 @@ def get_all_flashcards(db: Session = Depends(get_db)):
 def get_flashcard(flash_num: int, db: Session = Depends(get_db)):
     return db_flashcard_functions.get_flashcard(db, flash_num)
 
+# Update flashcard data
+@router.post('/update')
+def update_flashcard(request: FlashcardBase, db: Session = Depends(get_db), admin: DbUser = Depends(require_admin)):
+    return db_flashcard_functions.update_flashcard(db, request)
+
 # Delete one flashcard
 @router.delete('/delete/{flash_num}')
 def delete_flashcard(flash_num: int, db: Session = Depends(get_db)):
@@ -40,9 +45,12 @@ def delete_flashcard(flash_num: int, db: Session = Depends(get_db)):
 def get_upload_file(upload_file: UploadFile = File(...), db: Session = Depends(get_db), admin: DbUser = Depends(require_admin)):
     csv_text = upload_file.file.read().decode('utf-8-sig')
     csv_content = reader(io.StringIO(csv_text, newline=''))
-    counter = 0
+    flash_list = []
     for line in csv_content:
-        flashcard = FlashcardBase(pol=line[0], translate=line[1], topic=line[2])
-        db_flashcard_functions.create_flashcard(db, flashcard)
-        counter += 1 
-    return {'uploaded flashcards': counter}
+        try:
+            flashcard = FlashcardBase(pol=line[0].strip(), translate=line[1].strip(), topic=line[2].strip())
+            flash_list.append(flashcard)
+        except BaseException:
+            continue
+    return db_flashcard_functions.create_flashcards(db, flash_list)
+

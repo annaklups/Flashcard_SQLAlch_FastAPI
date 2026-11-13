@@ -23,7 +23,8 @@ DONE - apply authorisation to endpoints
 DONE - create endpoints for admin only
 DONE - add functionality to change the role from user to admin
 DONE - add functionality to add bunch of flashcards (File In, csv)
-- add frontend menu for admin only
+DONE - add frontend menu for admin only
+
 - add update flashcard option
 - add column for flashcards - "Created by" admin/user + login
 - change delete flashcard functionality allow user to delete only his flashcards

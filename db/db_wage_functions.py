@@ -18,4 +18,4 @@ def update_wages(db: Session, request: AnswerBase, wage_change: int):
     new_wage = wage_to_update.score + wage_change
     db.execute(update(DbWage).where(DbWage.user_num == request.user_num, DbWage.flash_num == request.flash_num).values(score = new_wage))
     db.commit()
-    return {'flash_num': request.flash_num, 'translate': request.answer, 'pol': request.pol, 'wage_change': wage_change}
+    return {'flash_num': request.flash_num, 'answer': request.answer, 'translate': request.translate, 'pol': request.pol, 'wage_change': wage_change}

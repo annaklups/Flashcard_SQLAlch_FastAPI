@@ -299,7 +299,7 @@ function App() {
     setAdminStatus('');
 
     try {
-      const response = await fetch(`http://localhost:8000/user/update/${adminUserId}`, {
+      const response = await fetch(`http://localhost:8000/admin/update/${adminUserId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -337,7 +337,7 @@ function App() {
     }
 
     try {
-      const response = await fetch(`http://localhost:8000/user/update_pass/${adminUserId}`, {
+      const response = await fetch(`http://localhost:8000/admin/update_pass/${adminUserId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -364,7 +364,7 @@ function App() {
 
     try {
       const response = await fetch(
-        `http://localhost:8000/user/update_role?user_num=${encodeURIComponent(adminUserId)}`,
+        `http://localhost:8000/admin/update_role?user_num=${encodeURIComponent(adminUserId)}`,
         {
           method: 'PUT',
           headers: {
@@ -389,7 +389,7 @@ function App() {
     setAdminStatus('');
 
     try {
-      const response = await fetch(`http://localhost:8000/user/delete/${adminUserId}`, {
+      const response = await fetch(`http://localhost:8000/admin/delete/${adminUserId}`, {
         method: 'DELETE',
         headers: {
           Authorization: getAdminAuthorization(),
@@ -478,6 +478,7 @@ function App() {
         body: JSON.stringify({
           flash_num: learningCard.flash_num,
           pol: learningCard.pol,
+          translate: learningCard.translate,
           answer: learningAnswer,
           user_num: loggedInUserId,
         }),

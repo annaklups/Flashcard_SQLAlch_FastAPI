@@ -262,7 +262,7 @@ test('Admin mode calls the user administration and flashcard upload endpoints', 
   fireEvent.change(screen.getByLabelText('New flashcards amount'), { target: { value: '10' } });
   fireEvent.submit(screen.getByRole('form', { name: 'Admin settings form' }));
   await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(2));
-  expect(global.fetch).toHaveBeenLastCalledWith('http://localhost:8000/user/update/7', {
+  expect(global.fetch).toHaveBeenLastCalledWith('http://localhost:8000/admin/update/7', {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
@@ -279,7 +279,7 @@ test('Admin mode calls the user administration and flashcard upload endpoints', 
   fireEvent.change(screen.getByLabelText('Confirm new password'), { target: { value: 'newpass' } });
   fireEvent.submit(screen.getByRole('form', { name: 'Admin password form' }));
   await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(3));
-  expect(global.fetch).toHaveBeenLastCalledWith('http://localhost:8000/user/update_pass/7', {
+  expect(global.fetch).toHaveBeenLastCalledWith('http://localhost:8000/admin/update_pass/7', {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
@@ -298,7 +298,7 @@ test('Admin mode calls the user administration and flashcard upload endpoints', 
   fireEvent.submit(screen.getByRole('form', { name: 'Admin role form' }));
   await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(4));
   expect(global.fetch).toHaveBeenLastCalledWith(
-    'http://localhost:8000/user/update_role?user_num=7',
+    'http://localhost:8000/admin/update_role?user_num=7',
     {
       method: 'PUT',
       headers: { Authorization: 'Bearer admin-token' },
@@ -310,7 +310,7 @@ test('Admin mode calls the user administration and flashcard upload endpoints', 
   fireEvent.change(screen.getByLabelText('Target user ID'), { target: { value: '7' } });
   fireEvent.submit(screen.getByRole('form', { name: 'Admin delete form' }));
   await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(5));
-  expect(global.fetch).toHaveBeenLastCalledWith('http://localhost:8000/user/delete/7', {
+  expect(global.fetch).toHaveBeenLastCalledWith('http://localhost:8000/admin/delete/7', {
     method: 'DELETE',
     headers: { Authorization: 'Bearer admin-token' },
   });
@@ -420,6 +420,16 @@ test('shows session completion prompt and lets the user start a new session or g
   fireEvent.submit(screen.getByRole('form', { name: 'Learning form' }));
 
   await waitFor(() => expect(screen.getByText('Correct answer.')).toBeInTheDocument());
+  const answerRequest = global.fetch.mock.calls.find(
+    ([requestedUrl]) => requestedUrl === 'http://localhost:8000/learning/answer',
+  );
+  expect(JSON.parse(answerRequest[1].body)).toEqual({
+    flash_num: 1,
+    pol: 'word1',
+    translate: 'translation1',
+    answer: 'translation1',
+    user_num: 1,
+  });
   fireEvent.click(screen.getByRole('button', { name: 'Next card' }));
 
   await waitFor(() => expect(screen.getByText('word2')).toBeInTheDocument());

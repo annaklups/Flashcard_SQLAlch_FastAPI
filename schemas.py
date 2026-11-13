@@ -55,8 +55,9 @@ class LearningDisplay(BaseModel):
 class AnswerBase(BaseModel):
     flash_num: int
     pol: str
-    answer: str
+    translate: str
     user_num: int
+    answer: str
 
 class AnswerDisplay(BaseModel):
     flash_num: int
