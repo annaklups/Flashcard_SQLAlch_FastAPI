@@ -25,10 +25,10 @@ DONE - add functionality to change the role from user to admin
 DONE - add functionality to add bunch of flashcards (File In, csv)
 DONE - add frontend menu for admin only
 DONE - add update flashcard option
+DONE - add in db column for flashcards - "Created by" admin/user + login
+DONE - change delete flashcard functionality allow user to delete only his flashcards
 
 Functionality:
-- add in db column for flashcards - "Created by" admin/user + login
-- change delete flashcard functionality allow user to delete only his flashcards
 - add additional table for recording each learning sessions:
     datetime, user, session number, flashcard number & wage change
 - create backend to show statistics

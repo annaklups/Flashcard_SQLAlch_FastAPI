@@ -28,6 +28,7 @@ class DbFlashcard(Base):
     pol: Mapped[str] = mapped_column(String(50))
     translate: Mapped[str] = mapped_column(String(50))
     topic: Mapped[str] = mapped_column(String(20))
+    created_by: Mapped[str] = mapped_column(String(20))
     wages_flash: Mapped[List["DbWage"]] = relationship(
         back_populates ='scores_flash', cascade="all, delete-orphan")
 

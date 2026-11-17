@@ -6,8 +6,8 @@ import io
 
 from db.database import get_db
 from db import db_flashcard_functions
-from schemas import FlashcardBase, FlashcardDisplay
-from auth.oauth import require_admin
+from schemas import FlashcardBase, FlashcardDisplay, UserAuth
+from auth.oauth import require_admin, get_current_user
 from db.models import DbUser
 
 router = APIRouter(
@@ -17,8 +17,8 @@ router = APIRouter(
 
 #Create flashcard
 @router.post('/', response_model = FlashcardDisplay)
-def create_flashcard(request: FlashcardBase, db: Session = Depends(get_db)):
-    return db_flashcard_functions.create_flashcard(db, request)
+def create_flashcard(request: FlashcardBase, db: Session = Depends(get_db), current_user: UserAuth = Depends(get_current_user)):
+    return db_flashcard_functions.create_flashcard(db, request, current_user.login, current_user.role)
 
 #Get all flashcards
 @router.get('/', response_model = List[FlashcardDisplay])
@@ -32,13 +32,13 @@ def get_flashcard(flash_num: int, db: Session = Depends(get_db)):
 
 # Update flashcard data
 @router.put('/update')
-def update_flashcard(request: FlashcardBase, db: Session = Depends(get_db), admin: DbUser = Depends(require_admin)):
-    return db_flashcard_functions.update_flashcard(db, request)
+def update_flashcard(request: FlashcardBase, db: Session = Depends(get_db), current_user: UserAuth = Depends(get_current_user)):
+    return db_flashcard_functions.update_flashcard(db, request, current_user.role, current_user.login)
 
 # Delete one flashcard
 @router.delete('/delete/{flash_num}')
-def delete_flashcard(flash_num: int, db: Session = Depends(get_db)):
-    return db_flashcard_functions.delete_flashcard(db, flash_num)
+def delete_flashcard(flash_num: int, db: Session = Depends(get_db), current_user: UserAuth = Depends(get_current_user)):
+    return db_flashcard_functions.delete_flashcard(db, flash_num, current_user.role, current_user.login)
 
 # Upload csv file for to add flashcards in bunch to db
 @router.post('/uploadfile')
@@ -52,5 +52,5 @@ def get_upload_file(upload_file: UploadFile = File(...), db: Session = Depends(g
             flash_list.append(flashcard)
         except BaseException:
             continue
-    return db_flashcard_functions.create_flashcards(db, flash_list)
+    return db_flashcard_functions.create_flashcards(db, flash_list, admin.login)
 

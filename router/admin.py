@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from db.database import get_db
 from db import db_user_functions, db_admin_functions
-from schemas import UserChangeSet, AdminChangePass
+from schemas import UserChangeSet, AdminChangePass, FlashcardBase
 from auth.oauth import require_admin
 from db.models import DbUser
 
@@ -31,3 +31,13 @@ def update_user_role(user_num: int, db: Session = Depends(get_db), admin: DbUser
 @router.delete('/delete/{user_num}')
 def delete_user(user_num: int, db: Session = Depends(get_db), admin: DbUser = Depends(require_admin)):
     return db_admin_functions.delete_user_admin(db, user_num)
+
+# Update flashcard data
+@router.put('/update')
+def update_flashcard(request: FlashcardBase, db: Session = Depends(get_db)):
+    return db_admin_functions.update_flashcard_byadmin(db, request)
+
+# Delete one flashcard
+@router.delete('/delete/{flash_num}')
+def delete_flashcard(flash_num: int, db: Session = Depends(get_db)):
+    return db_admin_functions.delete_flashcard_byadmin(db, flash_num)

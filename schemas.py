@@ -38,6 +38,7 @@ class FlashcardDisplay(BaseModel):
     pol: str
     translate: str
     topic: str
+    created_by: str
     wages_flash: List[Wages]
     class Config():
         orm_mode = True
@@ -69,6 +70,7 @@ class UserAuth(BaseModel):
     user_num: int
     login: str
     password: str
+    role: str
 
 # classes for change settings, change password and delete
 class UserChangeSet(BaseModel):

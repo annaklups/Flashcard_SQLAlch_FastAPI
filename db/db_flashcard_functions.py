@@ -6,7 +6,7 @@ from typing import List
 from db.models import DbFlashcard, DbUser, DbWage
 from schemas import FlashcardBase
 
-def create_flashcard(db: Session, request: FlashcardBase):
+def create_flashcard(db: Session, request: FlashcardBase, user_login: str, user_role: str):
     """Creating new flashcard. Updating wage table with new flashcard number"""
     existing_flash = db.scalars(select(DbFlashcard).filter_by(pol = request.pol, translate = request.translate)).first()
     if existing_flash:
@@ -15,7 +15,8 @@ def create_flashcard(db: Session, request: FlashcardBase):
     new_flashcard = DbFlashcard(
         pol = request.pol.strip(),
         translate = request.translate.strip(),
-        topic = request.topic.strip()
+        topic = request.topic.strip(),
+        created_by = user_role + user_login
     )
     db.add(new_flashcard)
     db.commit()
@@ -31,7 +32,7 @@ def create_flashcard(db: Session, request: FlashcardBase):
     db.commit()
     return new_flashcard
 
-def create_flashcards(db: Session, request: List[FlashcardBase]):
+def create_flashcards(db: Session, request: List[FlashcardBase], admin_login: str):
     """Creating new flashcards. Updating wage table with new flashcard number"""
     counter = 0
     i = 0
@@ -46,7 +47,8 @@ def create_flashcards(db: Session, request: List[FlashcardBase]):
             new_flashcard = DbFlashcard(
                 pol = request[i].pol,
                 translate = request[i].translate,
-                topic = request[i].topic
+                topic = request[i].topic,
+                created_by = "admin" + admin_login
             )
             db.add(new_flashcard)
             db.commit()
@@ -77,12 +79,15 @@ def get_flashcard(db: Session, flash_num: int):
             detail=f"Flashcard with flash_num {flash_num} not found")
     return flashcard
 
-def update_flashcard(db: Session, request: FlashcardBase):
+def update_flashcard(db: Session, request: FlashcardBase, user_role: str, user_login: str):
     """Update one flashcard data"""
     existing_flash = db.scalars(select(DbFlashcard).filter_by(pol = request.pol, translate = request.translate)).first()
     if not existing_flash:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Flashcard with this word {request.pol} and translation {request.translate} not found")
+    if user_role+user_login != existing_flash.created_by:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"Flashcard created by different user")
     db.execute(update(DbFlashcard).where(DbFlashcard.flash_num == existing_flash.flash_num).values(
         pol = request.pol,
         translate = request.translate,
@@ -91,12 +96,15 @@ def update_flashcard(db: Session, request: FlashcardBase):
     db.commit()
     return 'ok'
 
-def delete_flashcard(db:Session, flash_num: int):
+def delete_flashcard(db: Session, flash_num: int, user_role: str, user_login: str):
     """Deleting flashcard and all its data from db"""
     flashcard = db.scalars(select(DbFlashcard).filter_by(flash_num = flash_num)).first()
     if not flashcard:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Flashcard with flash_num {flash_num} not found")
+    if user_role+user_login != flashcard.created_by:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"Flashcard with flash_num {flash_num} created by different user")
     db.delete(flashcard)
     db.commit()
-    return "ok"   
+    return "ok"
