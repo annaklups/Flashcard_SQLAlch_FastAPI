@@ -43,9 +43,14 @@ function App() {
     new_flash_amount: 5,
   });
   const [adminPasswordForm, setAdminPasswordForm] = useState({
-    old_password: '',
     new_password1: '',
     new_password2: '',
+  });
+  const [adminFlashcardForm, setAdminFlashcardForm] = useState({
+    flash_num: '',
+    pol: '',
+    translate: '',
+    topic: '',
   });
   const [adminUploadFile, setAdminUploadFile] = useState(null);
   const [adminStatus, setAdminStatus] = useState('');
@@ -352,7 +357,45 @@ function App() {
       }
 
       setAdminStatus('User password changed successfully.');
-      setAdminPasswordForm({ old_password: '', new_password1: '', new_password2: '' });
+      setAdminPasswordForm({ new_password1: '', new_password2: '' });
+    } catch (error) {
+      setAdminStatus(error.message);
+    }
+  };
+
+  const handleAdminFlashcardChange = (event) => {
+    const { name, value } = event.target;
+    setAdminFlashcardForm((currentForm) => ({
+      ...currentForm,
+      [name]: value,
+    }));
+  };
+
+  const handleAdminFlashcardSubmit = async (event) => {
+    event.preventDefault();
+    setAdminStatus('');
+
+    const { flash_num, ...flashcard } = adminFlashcardForm;
+
+    try {
+      const response = await fetch(
+        `http://localhost:8000/flashcard/update?flash_num=${encodeURIComponent(flash_num)}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: getAdminAuthorization(),
+          },
+          body: JSON.stringify(flashcard),
+        },
+      );
+      const responseBody = await response.json();
+
+      if (!response.ok) {
+        throw new Error(responseBody.detail || 'Unable to update flashcard.');
+      }
+
+      setAdminStatus('Flashcard updated successfully.');
     } catch (error) {
       setAdminStatus(error.message);
     }
@@ -409,6 +452,7 @@ function App() {
 
   const handleAdminUploadSubmit = async (event) => {
     event.preventDefault();
+    const form = event.currentTarget;
     setAdminStatus('');
 
     if (!adminUploadFile) {
@@ -432,9 +476,9 @@ function App() {
         throw new Error(responseBody.detail || 'Unable to upload flashcards.');
       }
 
-      setAdminStatus('Flashcards uploaded successfully.');
+      setAdminStatus(`Flashcards added successfully: ${responseBody['added flashcards']}.`);
       setAdminUploadFile(null);
-      event.currentTarget.reset();
+      form.reset();
     } catch (error) {
       setAdminStatus(error.message);
     }
@@ -722,6 +766,12 @@ function App() {
                 }}>
                   Upload flashcards CSV
                 </button>
+                <button className="Menu-button" type="button" onClick={() => {
+                  setAdminStatus('');
+                  setPage('admin-flashcard');
+                }}>
+                  Update flashcard
+                </button>
                 <button
                   className="Back-button"
                   type="button"
@@ -800,16 +850,6 @@ function App() {
                     />
                   </label>
                   <label>
-                    Current password
-                    <input
-                      name="old_password"
-                      type="password"
-                      required
-                      value={adminPasswordForm.old_password}
-                      onChange={handleAdminPasswordChange}
-                    />
-                  </label>
-                  <label>
                     New password
                     <input
                       name="new_password1"
@@ -833,6 +873,64 @@ function App() {
                   </label>
                   <button className="Menu-button Password-submit" type="submit">
                     Save user password
+                  </button>
+                </form>
+                {adminStatus && <p role="status">{adminStatus}</p>}
+                <button className="Back-button" type="button" onClick={() => setPage('admin-mode')}>
+                  Back
+                </button>
+              </>
+        ) : page === 'admin-flashcard' ? (
+              <>
+                <h1>Update flashcard</h1>
+                <form
+                  className="Flashcard-form"
+                  aria-label="Admin flashcard form"
+                  onSubmit={handleAdminFlashcardSubmit}
+                >
+                  <label>
+                    Flashcard ID
+                    <input
+                      name="flash_num"
+                      type="number"
+                      min="1"
+                      required
+                      value={adminFlashcardForm.flash_num}
+                      onChange={handleAdminFlashcardChange}
+                    />
+                  </label>
+                  <label>
+                    Word
+                    <input
+                      name="pol"
+                      type="text"
+                      required
+                      value={adminFlashcardForm.pol}
+                      onChange={handleAdminFlashcardChange}
+                    />
+                  </label>
+                  <label>
+                    Translation
+                    <input
+                      name="translate"
+                      type="text"
+                      required
+                      value={adminFlashcardForm.translate}
+                      onChange={handleAdminFlashcardChange}
+                    />
+                  </label>
+                  <label>
+                    Topic
+                    <input
+                      name="topic"
+                      type="text"
+                      required
+                      value={adminFlashcardForm.topic}
+                      onChange={handleAdminFlashcardChange}
+                    />
+                  </label>
+                  <button className="Menu-button Flashcard-submit" type="submit">
+                    Save flashcard
                   </button>
                 </form>
                 {adminStatus && <p role="status">{adminStatus}</p>}

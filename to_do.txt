@@ -24,12 +24,19 @@ DONE - create endpoints for admin only
 DONE - add functionality to change the role from user to admin
 DONE - add functionality to add bunch of flashcards (File In, csv)
 DONE - add frontend menu for admin only
+DONE - add update flashcard option
 
-- add update flashcard option
-- add column for flashcards - "Created by" admin/user + login
+Functionality:
+- add in db column for flashcards - "Created by" admin/user + login
 - change delete flashcard functionality allow user to delete only his flashcards
-- check if token expiration also works for admins
+- add additional table for recording each learning sessions:
+    datetime, user, session number, flashcard number & wage change
+- create backend to show statistics
+    number of correct / wrong answers, total number sessions, total number of different flashcard trained/ learned, number of days in training, most seen flashcard 
+- create frontend to show statistics
 
+Additionals / Testing:
+- check if token expiration also works for admins
 - add messages for errors eg. Incorrect password, flashcards exist in db, user with this login exist in db etc.
 - test:
     - create new flashcard

@@ -77,7 +77,7 @@ def get_flashcard(db: Session, flash_num: int):
             detail=f"Flashcard with flash_num {flash_num} not found")
     return flashcard
 
-def update_flashcard(db: Session, flash_num: int, request: FlashcardBase):
+def update_flashcard(db: Session, request: FlashcardBase):
     """Update one flashcard data"""
     existing_flash = db.scalars(select(DbFlashcard).filter_by(pol = request.pol, translate = request.translate)).first()
     if not existing_flash:

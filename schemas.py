@@ -20,7 +20,6 @@ class UserBase(BaseModel):
 class UserDisplay(BaseModel):
     user_num: int
     login: str
-    password: str
     flash_amount: int
     new_flash_amount: int
     role: str    

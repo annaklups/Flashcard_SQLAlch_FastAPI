@@ -10,7 +10,7 @@ class DbUser(Base):
 
     user_num: Mapped[int] = mapped_column(primary_key=True)
     login: Mapped[str] = mapped_column(String(20), unique=True)
-    password: Mapped[str] = mapped_column(String(20))
+    password: Mapped[str] = mapped_column(String(130))
     flash_amount: Mapped[int] = mapped_column(Integer)
     new_flash_amount: Mapped[int] = mapped_column(Integer)
     role: Mapped[str] = mapped_column(String(5), default='user')
@@ -25,7 +25,7 @@ class DbFlashcard(Base):
     __tablename__ = 'flashcards_tab'
 
     flash_num: Mapped[int] = mapped_column(primary_key=True)
-    pol: Mapped[str] = mapped_column(String(50), unique=True)
+    pol: Mapped[str] = mapped_column(String(50))
     translate: Mapped[str] = mapped_column(String(50))
     topic: Mapped[str] = mapped_column(String(20))
     wages_flash: Mapped[List["DbWage"]] = relationship(

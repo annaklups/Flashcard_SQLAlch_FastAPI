@@ -31,7 +31,7 @@ def get_flashcard(flash_num: int, db: Session = Depends(get_db)):
     return db_flashcard_functions.get_flashcard(db, flash_num)
 
 # Update flashcard data
-@router.post('/update')
+@router.put('/update')
 def update_flashcard(request: FlashcardBase, db: Session = Depends(get_db), admin: DbUser = Depends(require_admin)):
     return db_flashcard_functions.update_flashcard(db, request)
 

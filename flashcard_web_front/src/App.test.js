@@ -236,6 +236,8 @@ test('Admin mode calls the user administration and flashcard upload endpoints', 
           flash_amount: 3,
           new_flash_amount: 1,
         }
+        : url === 'http://localhost:8000/flashcard/uploadfile'
+          ? { 'uploaded flashcards': 1, 'added flashcards': 1 }
         : 'ok'
     ),
   }));
@@ -255,6 +257,7 @@ test('Admin mode calls the user administration and flashcard upload endpoints', 
   expect(screen.getByRole('button', { name: 'Promote user to admin' })).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Delete user' })).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Upload flashcards CSV' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Update flashcard' })).toBeInTheDocument();
 
   fireEvent.click(screen.getByRole('button', { name: 'Update user settings' }));
   fireEvent.change(screen.getByLabelText('Target user ID'), { target: { value: '7' } });
@@ -274,7 +277,6 @@ test('Admin mode calls the user administration and flashcard upload endpoints', 
   fireEvent.click(screen.getByRole('button', { name: 'Back' }));
   fireEvent.click(screen.getByRole('button', { name: 'Update user password' }));
   fireEvent.change(screen.getByLabelText('Target user ID'), { target: { value: '7' } });
-  fireEvent.change(screen.getByLabelText('Current password'), { target: { value: 'oldpass' } });
   fireEvent.change(screen.getByLabelText('New password'), { target: { value: 'newpass' } });
   fireEvent.change(screen.getByLabelText('Confirm new password'), { target: { value: 'newpass' } });
   fireEvent.submit(screen.getByRole('form', { name: 'Admin password form' }));
@@ -286,7 +288,6 @@ test('Admin mode calls the user administration and flashcard upload endpoints', 
       Authorization: 'Bearer admin-token',
     },
     body: JSON.stringify({
-      old_password: 'oldpass',
       new_password1: 'newpass',
       new_password2: 'newpass',
     }),
@@ -316,17 +317,39 @@ test('Admin mode calls the user administration and flashcard upload endpoints', 
   });
 
   fireEvent.click(screen.getByRole('button', { name: 'Back' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Update flashcard' }));
+  fireEvent.change(screen.getByLabelText('Flashcard ID'), { target: { value: '12' } });
+  fireEvent.change(screen.getByLabelText('Word'), { target: { value: 'hello' } });
+  fireEvent.change(screen.getByLabelText('Translation'), { target: { value: 'hola' } });
+  fireEvent.change(screen.getByLabelText('Topic'), { target: { value: 'greetings' } });
+  fireEvent.submit(screen.getByRole('form', { name: 'Admin flashcard form' }));
+  await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(6));
+  expect(global.fetch).toHaveBeenLastCalledWith(
+    'http://localhost:8000/flashcard/update?flash_num=12',
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer admin-token',
+      },
+      body: JSON.stringify({ pol: 'hello', translate: 'hola', topic: 'greetings' }),
+    },
+  );
+  expect(await screen.findByText('Flashcard updated successfully.')).toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole('button', { name: 'Back' }));
   fireEvent.click(screen.getByRole('button', { name: 'Upload flashcards CSV' }));
   const csvFile = new File(['word,translation,topic'], 'flashcards.csv', { type: 'text/csv' });
   fireEvent.change(screen.getByLabelText('CSV file'), { target: { files: [csvFile] } });
   fireEvent.submit(screen.getByRole('form', { name: 'Admin upload form' }));
-  await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(6));
+  await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(7));
 
-  const [uploadUrl, uploadOptions] = global.fetch.mock.calls[5];
+  const [uploadUrl, uploadOptions] = global.fetch.mock.calls[6];
   expect(uploadUrl).toBe('http://localhost:8000/flashcard/uploadfile');
   expect(uploadOptions.method).toBe('POST');
   expect(uploadOptions.headers).toEqual({ Authorization: 'Bearer admin-token' });
   expect(uploadOptions.body.get('upload_file').name).toBe('flashcards.csv');
+  expect(await screen.findByText('Flashcards added successfully: 1.')).toBeInTheDocument();
 
   global.fetch = originalFetch;
 });
