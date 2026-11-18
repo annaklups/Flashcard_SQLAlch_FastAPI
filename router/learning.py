@@ -24,4 +24,4 @@ def get_flashcard(is_new: bool, db: Session = Depends(get_db), current_user: Use
 def send_answer(request: AnswerBase, db: Session = Depends(get_db)):
     flash_service = FlashService()
     wage_change = flash_service.check_answer(db, request)
-    return db_wage_functions.update_wages(db, request, wage_change)
+    return db_wage_functions.update_wages(db, request, wage_change['change'])

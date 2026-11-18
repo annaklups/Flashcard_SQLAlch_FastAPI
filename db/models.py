@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import String, Integer, ForeignKey
+from sqlalchemy import String, Integer, ForeignKey, DateTime
 from typing import List
+import datetime
 
 from db.database import Base
 
@@ -48,3 +49,13 @@ class DbWage(Base):
     score: Mapped[int] = mapped_column(Integer, default=5)
     scores_user: Mapped["DbUser"] = relationship(back_populates='wages_user')
     scores_flash: Mapped["DbFlashcard"] = relationship(back_populates='wages_flash')
+
+class DbLearnSession(Base):
+    """Creating learnsession_tab table in db"""
+    __tablename__ = 'learnsession_tab'
+
+    learnsession_num: Mapped[int] = mapped_column(primary_key=True)
+    user_login: Mapped[str] = mapped_column(String(20))
+    datestamp: Mapped[datetime.datetime] = mapped_column(DateTime)
+    flashcard_num: Mapped[int] = mapped_column(Integer)
+    wage_change: Mapped[int] = mapped_column(Integer)

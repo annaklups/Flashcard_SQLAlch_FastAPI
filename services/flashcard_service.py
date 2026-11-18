@@ -22,31 +22,7 @@ class FlashService:
     def check_answer(self, db: Session, request: AnswerBase):
         """Check correctness of user's answer"""
         flashcard = db_flashcard_functions.get_flashcard(db, request.flash_num)
-        if flashcard.translate == request.answer:
-            return -1
+        if flashcard.translate == request.answer.lower():
+            return {'change': -1, 'correct translation': flashcard.translate}
         else:
-            return 1
-
-    # def _learn_flashcard(self, flash_drawn):                
-    #     """Learning flashcard drawn previously from db. Returning wage update for the flashcard"""
-    #     print(f"Flashcard number:{flash_drawn.flash_num} - POL: {flash_drawn.pol.upper()}")
-    #     answer = input("Please provide translation:")
-    #     if answer.lower() == flash_drawn.translate:
-    #         print("Correct answer!!")
-    #         return -1
-    #     else:
-    #         print(f"You have to work on that. Correct answer is: {flash_drawn.translate}")
-    #         return 1
-
-    # def _learning_part(self, login_data, repetitions, flag_new):
-    #     """One part of learning flashards (as many as previously declared in users data). 
-    #     New or old ones. Updating wages based on users answers"""
-    #     for i in range(repetitions):
-    #         flash_drawn = self._draw_flashcard(login_data['user_num'], flag_new)
-    #         wage_change = self._learn_flashcard(flash_drawn)
-    #         update_wages(login_data['user_num'], flash_drawn.flash_num, wage_change)
-
-    # def learning(self, login_data):
-    #     """Learning module - first old flashcards then new flashcards"""
-    #     self._learning_part(login_data, login_data['flash_amount'] - login_data['new_flash_amount'], False)
-    #     self._learning_part(login_data, login_data['new_flash_amount'], True)
+            return {'change': 1, 'your answer': request.answer, 'correct translation': flashcard.translate}

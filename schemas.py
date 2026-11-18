@@ -57,6 +57,7 @@ class AnswerBase(BaseModel):
     pol: str
     translate: str
     user_num: int
+    login: str
     answer: str
 
 class AnswerDisplay(BaseModel):
