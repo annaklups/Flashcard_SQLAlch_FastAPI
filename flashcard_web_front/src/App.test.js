@@ -1,10 +1,11 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import App from './App';
 
-test('renders learn react link', () => {
+test('renders the flashcard app introduction', () => {
   render(<App />);
-  const linkElement = screen.getByText(/learn react/i);
-  expect(linkElement).toBeInTheDocument();
+  expect(
+    screen.getByText(/learn and practice flashcards/i),
+  ).toBeInTheDocument();
 });
 
 test('Start button opens the Menu page', () => {
@@ -318,16 +319,15 @@ test('Admin mode calls the user administration and flashcard upload endpoints', 
 
   fireEvent.click(screen.getByRole('button', { name: 'Back' }));
   fireEvent.click(screen.getByRole('button', { name: 'Update flashcard' }));
-  fireEvent.change(screen.getByLabelText('Flashcard ID'), { target: { value: '12' } });
   fireEvent.change(screen.getByLabelText('Word'), { target: { value: 'hello' } });
   fireEvent.change(screen.getByLabelText('Translation'), { target: { value: 'hola' } });
   fireEvent.change(screen.getByLabelText('Topic'), { target: { value: 'greetings' } });
   fireEvent.submit(screen.getByRole('form', { name: 'Admin flashcard form' }));
   await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(6));
   expect(global.fetch).toHaveBeenLastCalledWith(
-    'http://localhost:8000/flashcard/update?flash_num=12',
+    'http://localhost:8000/admin/update',
     {
-      method: 'POST',
+      method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
         Authorization: 'Bearer admin-token',
@@ -452,6 +452,7 @@ test('shows session completion prompt and lets the user start a new session or g
     translate: 'translation1',
     answer: 'translation1',
     user_num: 1,
+    login: 'newuser',
   });
   fireEvent.click(screen.getByRole('button', { name: 'Next card' }));
 

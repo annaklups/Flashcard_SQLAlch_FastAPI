@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import String, Integer, ForeignKey, DateTime
+from sqlalchemy import String, Integer, ForeignKey, Date
 from typing import List
 import datetime
 
@@ -50,12 +50,12 @@ class DbWage(Base):
     scores_user: Mapped["DbUser"] = relationship(back_populates='wages_user')
     scores_flash: Mapped["DbFlashcard"] = relationship(back_populates='wages_flash')
 
-class DbLearnSession(Base):
-    """Creating learnsession_tab table in db"""
-    __tablename__ = 'learnsession_tab'
+class DbLearnFlash(Base):
+    """Creating learnflash_tab table in db"""
+    __tablename__ = 'learnflash_tab'
 
-    learnsession_num: Mapped[int] = mapped_column(primary_key=True)
-    user_login: Mapped[str] = mapped_column(String(20))
-    datestamp: Mapped[datetime.datetime] = mapped_column(DateTime)
+    learnflash_num: Mapped[int] = mapped_column(primary_key=True)
+    user_num: Mapped[int] = mapped_column(Integer)
+    datestamp: Mapped[datetime.date] = mapped_column(Date)
     flashcard_num: Mapped[int] = mapped_column(Integer)
     wage_change: Mapped[int] = mapped_column(Integer)

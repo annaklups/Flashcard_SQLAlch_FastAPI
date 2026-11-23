@@ -6,125 +6,296 @@
   position: fixed;
   top: 1rem;
   right: 1rem;
-  z-index: 1;
-  color: #61dafb;
-}
-
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+  z-index: 10;
+  max-width: calc(100vw - 2rem);
+  padding: 0.55rem 0.8rem;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.82);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.18);
+  backdrop-filter: blur(12px);
+  color: #e2e8f0;
+  font-size: 0.875rem;
+  font-weight: 700;
 }
 
 .App-header {
-  background-color: #282c34;
+  box-sizing: border-box;
+  position: relative;
+  overflow-x: hidden;
+  background:
+    radial-gradient(circle at 15% 15%, rgba(56, 189, 248, 0.13), transparent 28rem),
+    radial-gradient(circle at 85% 85%, rgba(99, 102, 241, 0.12), transparent 30rem),
+    linear-gradient(145deg, #0f172a 0%, #111827 100%);
   min-height: 100vh;
+  padding: 5.25rem 1.25rem 4.5rem;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+  gap: 0.75rem;
+  color: #f8fafc;
+  font-size: 1rem;
 }
 
-.App-link {
-  color: #61dafb;
+.App-header h1 {
+  max-width: 42rem;
+  margin: 0 0 0.75rem;
+  color: #f8fafc;
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+  text-wrap: balance;
+}
+
+.App-header > p {
+  margin: 0.25rem 0;
+  color: #cbd5e1;
+  line-height: 1.6;
+}
+
+.Start-button,
+.Menu-button {
+  min-height: 48px;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 12px;
+  background: #2563eb;
+  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.22);
+  color: #ffffff;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 750;
+  line-height: 1;
+  padding: 0.75rem 1.25rem;
+  transition:
+    transform 150ms ease,
+    background-color 150ms ease,
+    border-color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.App-header > .Menu-button {
+  width: min(90vw, 22rem);
 }
 
 .Start-button {
-  font-size: 1.7em;
-  padding: 0.425em 0.85em;
+  min-width: 10rem;
+  margin: 0.25rem 0;
+  background: linear-gradient(135deg, #38bdf8 0%, #2563eb 100%);
+  font-size: 1.125rem;
+  box-shadow: 0 12px 28px rgba(37, 99, 235, 0.28);
 }
 
-.Menu-button {
-  font-size: 1.7em;
-  padding: 0.425em 0.85em;
+.Start-button:hover,
+.Menu-button:hover {
+  background: #1d4ed8;
+  border-color: rgba(191, 219, 254, 0.38);
+  box-shadow: 0 12px 26px rgba(37, 99, 235, 0.32);
+  transform: translateY(-1px);
+}
+
+.Start-button:active,
+.Menu-button:active {
+  transform: translateY(0);
+  box-shadow: 0 6px 14px rgba(37, 99, 235, 0.22);
+}
+
+.Start-button:focus-visible,
+.Menu-button:focus-visible,
+input:focus-visible,
+button:focus-visible {
+  outline: 3px solid rgba(125, 211, 252, 0.72);
+  outline-offset: 3px;
 }
 
 .Create-user-form,
 .Login-form,
 .Settings-form,
 .Flashcard-form,
-.Password-form {
+.Password-form,
+.Learning-form {
+  box-sizing: border-box;
+  width: min(90vw, 28rem);
+  gap: 1rem;
+  margin: 0.25rem 0 3.5rem;
+  padding: 1.5rem;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 18px;
+  background: rgba(30, 41, 59, 0.92);
+  box-shadow: 0 24px 60px rgba(2, 6, 23, 0.28);
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  width: min(90vw, 20rem);
 }
 
 .Create-user-form label,
 .Login-form label,
 .Settings-form label,
 .Flashcard-form label,
-.Password-form label {
+.Password-form label,
+.Learning-form label {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
-  font-size: 1rem;
+  gap: 0.45rem;
+  color: #cbd5e1;
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-align: left;
 }
 
 .Create-user-form input,
 .Login-form input,
 .Settings-form input,
 .Flashcard-form input,
-.Password-form input {
+.Password-form input,
+.Learning-form input {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 46px;
+  border: 1px solid #475569;
+  border-radius: 10px;
+  background: #0f172a;
+  color: #f8fafc;
   font-size: 1rem;
-  padding: 0.4rem;
+  font-family: inherit;
+  padding: 0.65rem 0.75rem;
+  transition: border-color 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
+}
+
+.Create-user-form input:focus,
+.Login-form input:focus,
+.Settings-form input:focus,
+.Flashcard-form input:focus,
+.Password-form input:focus,
+.Learning-form input:focus {
+  border-color: #38bdf8;
+  background: #111c30;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.12);
+  outline: none;
 }
 
 .Create-user-submit {
-  width: 160%;
-  align-self: center;
-  box-sizing: border-box;
-  white-space: nowrap;
+  width: 100%;
 }
 
-.Login-submit {
-  width: 160%;
-  align-self: center;
-  box-sizing: border-box;
-  white-space: nowrap;
-}
-
-.Settings-submit {
-  width: 160%;
-  align-self: center;
-  box-sizing: border-box;
-  white-space: nowrap;
-}
-
-.Flashcard-submit {
-  width: 160%;
-  align-self: center;
-  box-sizing: border-box;
-  white-space: nowrap;
-}
-
+.Login-submit,
+.Settings-submit,
+.Flashcard-submit,
 .Password-submit {
-  width: 160%;
-  align-self: center;
-  box-sizing: border-box;
-  white-space: nowrap;
+  width: 100%;
+  margin-top: 0.25rem;
+}
+
+.Statistics-list {
+  width: min(90vw, 32rem);
+  margin: 0.25rem 0 4.5rem;
+  padding: 0.75rem 1.25rem;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 18px;
+  background: rgba(30, 41, 59, 0.92);
+  box-shadow: 0 24px 60px rgba(2, 6, 23, 0.28);
+  text-align: left;
+}
+
+.Statistics-list div {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 1.25rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+  padding: 0.85rem 0;
+  color: #cbd5e1;
+  font-size: 0.925rem;
+}
+
+.Statistics-list div:last-child {
+  border-bottom: 0;
+}
+
+.Statistics-list dt {
+  text-transform: capitalize;
+}
+
+.Statistics-list dd {
+  margin: 0;
+  color: #7dd3fc;
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.Learning-form p {
+  margin: 0 0 0.25rem;
+  color: #7dd3fc;
+  font-size: clamp(1.5rem, 6vw, 2.25rem);
+  font-weight: 800;
+  text-align: center;
 }
 
 .Back-button {
   position: fixed;
   left: 1rem;
   bottom: 1rem;
-  font-size: 0.85em;
-  padding: 0.425em 0.85em;
+  z-index: 10;
+  min-height: 40px;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.82);
+  box-shadow: 0 10px 24px rgba(2, 6, 23, 0.22);
+  backdrop-filter: blur(10px);
+  color: #e2e8f0;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 750;
+  padding: 0.55rem 1rem;
+  transition: background-color 150ms ease, border-color 150ms ease, transform 150ms ease;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
+.Back-button:hover {
+  border-color: #64748b;
+  background: #1e293b;
+  transform: translateY(-1px);
+}
+
+.Back-button:active {
+  transform: translateY(0);
+}
+
+@media (max-width: 640px) {
+  .Login-status {
+    top: 0.75rem;
+    right: 0.75rem;
   }
-  to {
-    transform: rotate(360deg);
+
+  .App-header {
+    justify-content: flex-start;
+    padding-top: 5.5rem;
+  }
+
+  .App-header h1 {
+    max-width: 20rem;
+  }
+
+  .Create-user-form,
+  .Login-form,
+  .Settings-form,
+  .Flashcard-form,
+  .Password-form,
+  .Learning-form {
+    width: min(calc(100vw - 2rem), 28rem);
+    padding: 1.25rem;
+  }
+
+  .App-header > .Menu-button {
+    width: min(calc(100vw - 2rem), 22rem);
+  }
+
+  .Statistics-list {
+    width: min(calc(100vw - 2rem), 32rem);
+  }
+
+  .Back-button {
+    left: 0.75rem;
+    bottom: 0.75rem;
   }
 }

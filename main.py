@@ -4,7 +4,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from router import user, admin, flashcard, learning
+from router import user, admin, flashcard, learning, statistics
 from db import models
 from auth import authentication
 
@@ -17,6 +17,7 @@ app.include_router(admin.router)
 app.include_router(flashcard.router)
 app.include_router(learning.router)
 app.include_router(authentication.router)
+app.include_router(statistics.router)
 
 @app.get('/')
 def start():

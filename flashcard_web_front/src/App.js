@@ -54,6 +54,8 @@ function App() {
   });
   const [adminUploadFile, setAdminUploadFile] = useState(null);
   const [adminStatus, setAdminStatus] = useState('');
+  const [statistics, setStatistics] = useState(null);
+  const [statisticsStatus, setStatisticsStatus] = useState('');
   const [learningCard, setLearningCard] = useState(null);
   const [learningAnswer, setLearningAnswer] = useState('');
   const [learningStatus, setLearningStatus] = useState('');
@@ -375,20 +377,19 @@ function App() {
     event.preventDefault();
     setAdminStatus('');
 
-    const { flash_num, ...flashcard } = adminFlashcardForm;
-
     try {
-      const response = await fetch(
-        `http://localhost:8000/flashcard/update?flash_num=${encodeURIComponent(flash_num)}`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: getAdminAuthorization(),
-          },
-          body: JSON.stringify(flashcard),
+      const response = await fetch('http://localhost:8000/admin/update', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: getAdminAuthorization(),
         },
-      );
+        body: JSON.stringify({
+          pol: adminFlashcardForm.pol,
+          translate: adminFlashcardForm.translate,
+          topic: adminFlashcardForm.topic,
+        }),
+      });
       const responseBody = await response.json();
 
       if (!response.ok) {
@@ -396,6 +397,33 @@ function App() {
       }
 
       setAdminStatus('Flashcard updated successfully.');
+    } catch (error) {
+      setAdminStatus(error.message);
+    }
+  };
+
+  const handleAdminDeleteFlashcardSubmit = async (event) => {
+    event.preventDefault();
+    setAdminStatus('');
+
+    try {
+      const response = await fetch(
+        `http://localhost:8000/admin/delete/${encodeURIComponent(adminFlashcardForm.flash_num)}`,
+        {
+          method: 'DELETE',
+          headers: {
+            Authorization: getAdminAuthorization(),
+          },
+        },
+      );
+      const responseBody = await response.json();
+
+      if (!response.ok) {
+        throw new Error(responseBody.detail || 'Unable to delete flashcard.');
+      }
+
+      setAdminStatus('Flashcard deleted successfully.');
+      setAdminFlashcardForm((currentForm) => ({ ...currentForm, flash_num: '' }));
     } catch (error) {
       setAdminStatus(error.message);
     }
@@ -484,6 +512,28 @@ function App() {
     }
   };
 
+  const loadStatistics = async () => {
+    setStatisticsStatus('');
+
+    try {
+      const response = await fetch('http://localhost:8000/statistics/', {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+        },
+      });
+      const responseBody = await response.json();
+
+      if (!response.ok) {
+        throw new Error(responseBody.detail || 'Unable to load statistics.');
+      }
+
+      setStatistics(responseBody);
+    } catch (error) {
+      setStatisticsStatus(error.message);
+      setStatistics(null);
+    }
+  };
+
   const loadLearningCard = async (isNewCard = true) => {
     setLearningStatus('');
     setLearningCard(null);
@@ -525,6 +575,7 @@ function App() {
           translate: learningCard.translate,
           answer: learningAnswer,
           user_num: loggedInUserId,
+          login: loggedInUser,
         }),
       });
       const responseBody = await response.json();
@@ -612,18 +663,7 @@ function App() {
             >
               Start
             </button>
-            <p>
-              Edit <code>src/App.js</code> and save to reload.
-            </p>
-            <a
-              className="App-link"
-              href="https://reactjs.org"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learn React
-            </a>
-            <p className="App-testing-app">Testing APP</p>
+            <p>Learn and practice flashcards with the Flashcard API.</p>
           </>
         ) : page === 'menu' ? (
           <>
@@ -705,6 +745,18 @@ function App() {
                   className="Menu-button"
                   type="button"
                   onClick={() => {
+                    setStatistics(null);
+                    setStatisticsStatus('');
+                    setPage('statistics');
+                    loadStatistics();
+                  }}
+                >
+                  View statistics
+                </button>
+                <button
+                  className="Menu-button"
+                  type="button"
+                  onClick={() => {
                     setAdminStatus('');
                     setPage('admin-mode');
                   }}
@@ -771,6 +823,13 @@ function App() {
                   setPage('admin-flashcard');
                 }}>
                   Update flashcard
+                </button>
+                <button className="Menu-button" type="button" onClick={() => {
+                  setAdminStatus('');
+                  setAdminFlashcardForm((currentForm) => ({ ...currentForm, flash_num: '' }));
+                  setPage('admin-delete-flashcard');
+                }}>
+                  Delete flashcard
                 </button>
                 <button
                   className="Back-button"
@@ -888,17 +947,6 @@ function App() {
                   aria-label="Admin flashcard form"
                   onSubmit={handleAdminFlashcardSubmit}
                 >
-                  <label>
-                    Flashcard ID
-                    <input
-                      name="flash_num"
-                      type="number"
-                      min="1"
-                      required
-                      value={adminFlashcardForm.flash_num}
-                      onChange={handleAdminFlashcardChange}
-                    />
-                  </label>
                   <label>
                     Word
                     <input
@@ -1022,6 +1070,58 @@ function App() {
                   Back
                 </button>
               </>
+        ) : page === 'admin-delete-flashcard' ? (
+              <>
+                <h1>Delete flashcard</h1>
+                <p>This permanently deletes the selected flashcard.</p>
+                <form
+                  className="Settings-form"
+                  aria-label="Admin delete flashcard form"
+                  onSubmit={handleAdminDeleteFlashcardSubmit}
+                >
+                  <label>
+                    Flashcard ID
+                    <input
+                      name="flash_num"
+                      type="number"
+                      min="1"
+                      required
+                      value={adminFlashcardForm.flash_num}
+                      onChange={handleAdminFlashcardChange}
+                    />
+                  </label>
+                  <button className="Menu-button" type="submit">
+                    Delete flashcard
+                  </button>
+                </form>
+                {adminStatus && <p role="status">{adminStatus}</p>}
+                <button className="Back-button" type="button" onClick={() => setPage('admin-mode')}>
+                  Back
+                </button>
+              </>
+        ) : page === 'statistics' ? (
+          <>
+            <h1>Statistics</h1>
+            {statisticsStatus && <p role="status">{statisticsStatus}</p>}
+            {statistics && (
+              <dl className="Statistics-list">
+                {Object.entries(statistics).map(([label, value]) => (
+                  <div key={label}>
+                    <dt>{label}</dt>
+                    <dd>{String(value)}</dd>
+                  </div>
+                ))}
+              </dl>
+            )}
+            {!statistics && !statisticsStatus && <p>Loading statistics...</p>}
+            <button
+              className="Back-button"
+              type="button"
+              onClick={() => setPage('menu')}
+            >
+              Back
+            </button>
+          </>
         ) : page === 'learning' ? (
           <>
             <h1>Learning</h1>
