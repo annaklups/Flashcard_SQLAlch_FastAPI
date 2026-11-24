@@ -15,12 +15,12 @@ def get_wages_for_draw(db: Session, user_num: int):
 
 def update_wages(db: Session, request: AnswerBase, wage_change: int):
     """Updating wage for selected user and flashcard with provided wage change"""
-    wage_to_update = db.scalars(select(DbWage).filter_by(user_num = request.user_num , flash_num = request.flash_num)).first()
+    wage_to_update = db.scalars(select(DbWage).filter_by(user_num = request.user_num, flash_num = request.flash_num)).first()
     new_wage = wage_to_update.score + wage_change
     db.execute(update(DbWage).where(DbWage.user_num == request.user_num, DbWage.flash_num == request.flash_num).values(score = new_wage))
     new_learningsession = DbLearnFlash(
-        user_login = request.login,
-        datestamp = datetime.datetime.now,
+        user_num = request.user_num,
+        datestamp = datetime.date.today(),
         flashcard_num = request.flash_num, 
         wage_change = wage_change
     )

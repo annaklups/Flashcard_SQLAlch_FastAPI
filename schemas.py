@@ -90,3 +90,12 @@ class UserDelete(BaseModel):
 class AdminChangePass(BaseModel):
     new_password1: str = Field(pattern=r'^[A-Za-z0-9]+$')
     new_password2: str = Field(pattern=r'^[A-Za-z0-9]+$')
+
+class StatisticsDisplay(BaseModel):
+    total_session: int
+    num_correct_answer: int
+    num_incorrect_answer: int
+    diff_flashcard_train: int
+    diff_flashcard_learn: int
+    num_days_row: int
+    most_trained_flash: int 

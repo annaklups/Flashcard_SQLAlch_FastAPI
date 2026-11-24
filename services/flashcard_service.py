@@ -22,7 +22,7 @@ class FlashService:
     def check_answer(self, db: Session, request: AnswerBase):
         """Check correctness of user's answer"""
         flashcard = db_flashcard_functions.get_flashcard(db, request.flash_num)
-        if flashcard.translate == request.answer.lower():
+        if flashcard.translate == request.answer.lower().strip():
             return {'change': -1, 'correct translation': flashcard.translate}
         else:
             return {'change': 1, 'your answer': request.answer, 'correct translation': flashcard.translate}
