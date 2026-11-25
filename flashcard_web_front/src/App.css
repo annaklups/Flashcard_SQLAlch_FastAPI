@@ -79,6 +79,35 @@
   width: min(90vw, 22rem);
 }
 
+.Admin-menu-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.25rem;
+  width: min(90vw, 48rem);
+}
+
+.Admin-menu-column {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 18px;
+  background: rgba(30, 41, 59, 0.62);
+}
+
+.Admin-menu-heading {
+  margin: 0 0 0.25rem;
+  color: #cbd5e1;
+  font-size: 1.125rem;
+}
+
+.Admin-menu-column .Menu-button {
+  width: 100%;
+}
+
 .Start-button {
   min-width: 10rem;
   margin: 0.25rem 0;
@@ -251,6 +280,11 @@ button:focus-visible {
   transition: background-color 150ms ease, border-color 150ms ease, transform 150ms ease;
 }
 
+.Admin-mode-button {
+  top: 1rem;
+  bottom: auto;
+}
+
 .Back-button:hover {
   border-color: #64748b;
   background: #1e293b;
@@ -290,6 +324,11 @@ button:focus-visible {
     width: min(calc(100vw - 2rem), 22rem);
   }
 
+  .Admin-menu-grid {
+    grid-template-columns: 1fr;
+    width: min(calc(100vw - 2rem), 28rem);
+  }
+
   .Statistics-list {
     width: min(calc(100vw - 2rem), 32rem);
   }
@@ -297,5 +336,10 @@ button:focus-visible {
   .Back-button {
     left: 0.75rem;
     bottom: 0.75rem;
+  }
+
+  .Admin-mode-button {
+    top: 0.75rem;
+    bottom: auto;
   }
 }

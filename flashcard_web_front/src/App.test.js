@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import App from './App';
 
 test('renders the flashcard app introduction', () => {
@@ -16,6 +16,7 @@ test('Start button opens the Menu page', () => {
   expect(screen.getByRole('heading', { name: 'Menu' })).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Create user' })).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Log in' })).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Settings' })).not.toBeInTheDocument();
   expect(screen.queryByRole('button', { name: 'Log out' })).not.toBeInTheDocument();
   expect(screen.queryByRole('button', { name: 'Change settings' })).not.toBeInTheDocument();
   expect(screen.queryByRole('button', { name: 'Change password' })).not.toBeInTheDocument();
@@ -81,16 +82,20 @@ test('Log in submits credentials and shows the logged-in user', async () => {
   expect(screen.getByText('Succesful log in')).toBeInTheDocument();
 
   await act(async () => {
-    await new Promise((resolve) => setTimeout(resolve, 3000));
+    await new Promise((resolve) => setTimeout(resolve, 2000));
   });
   expect(screen.getByRole('heading', { name: 'Menu' })).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Log out' })).toBeInTheDocument();
-  expect(screen.getByRole('button', { name: 'Change settings' })).toBeInTheDocument();
-  expect(screen.getByRole('button', { name: 'Change password' })).toBeInTheDocument();
-  expect(screen.getByRole('button', { name: 'Delete user' })).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Log in' })).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Create user' })).not.toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Settings' })).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Change settings' })).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Change password' })).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Delete user' })).not.toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Add new flashcard' })).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Start learning' })).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Admin mode' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Admin mode' })).toHaveClass('Admin-mode-button');
   expect(localStorage.getItem('access_token')).toBe('token');
 
   fireEvent.click(screen.getByRole('button', { name: 'Start learning' }));
@@ -101,6 +106,8 @@ test('Log in submits credentials and shows the logged-in user', async () => {
   fireEvent.click(screen.getByRole('button', { name: 'Back' }));
   expect(screen.getByRole('heading', { name: 'Menu' })).toBeInTheDocument();
 
+  fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+  expect(screen.getByRole('heading', { name: 'Settings' })).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Change settings' }));
   expect(screen.getByRole('heading', { name: 'Change settings' })).toBeInTheDocument();
   fireEvent.change(screen.getByLabelText('Flashcards amount'), {
@@ -124,6 +131,8 @@ test('Log in submits credentials and shows the logged-in user', async () => {
     await screen.findByText('Settings changed successfully.'),
   ).toBeInTheDocument();
 
+  fireEvent.click(screen.getByRole('button', { name: 'Back' }));
+  expect(screen.getByRole('heading', { name: 'Settings' })).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Back' }));
   expect(screen.getByRole('heading', { name: 'Menu' })).toBeInTheDocument();
 
@@ -156,6 +165,7 @@ test('Log in submits credentials and shows the logged-in user', async () => {
   fireEvent.click(screen.getByRole('button', { name: 'Back' }));
   expect(screen.getByRole('heading', { name: 'Menu' })).toBeInTheDocument();
 
+  fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
   fireEvent.click(screen.getByRole('button', { name: 'Change password' }));
   expect(screen.getByRole('heading', { name: 'Change password' })).toBeInTheDocument();
   fireEvent.change(screen.getByLabelText('Current password'), {
@@ -187,8 +197,11 @@ test('Log in submits credentials and shows the logged-in user', async () => {
   ).toBeInTheDocument();
 
   fireEvent.click(screen.getByRole('button', { name: 'Back' }));
+  expect(screen.getByRole('heading', { name: 'Settings' })).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Back' }));
   expect(screen.getByRole('heading', { name: 'Menu' })).toBeInTheDocument();
 
+  fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
   fireEvent.click(screen.getByRole('button', { name: 'Delete user' }));
   expect(screen.getByRole('heading', { name: 'Delete user' })).toBeInTheDocument();
   fireEvent.change(screen.getByLabelText('Current password'), {
@@ -219,6 +232,66 @@ test('Log in submits credentials and shows the logged-in user', async () => {
   expect(screen.queryByRole('button', { name: 'Log out' })).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Log in' }));
   expect(screen.queryByText('Succesful log in')).not.toBeInTheDocument();
+
+  global.fetch = originalFetch;
+});
+
+test('shows renamed statistics and confirms logout for two seconds', async () => {
+  const originalFetch = global.fetch;
+  global.fetch = jest.fn((url) => Promise.resolve({
+    status: 200,
+    ok: true,
+    json: async () => (
+      url === 'http://localhost:8000/login'
+        ? {
+          username: 'newuser',
+          access_token: 'token',
+          flash_amount: 3,
+          new_flash_amount: 1,
+        }
+        : {
+          total_session: 10,
+          num_correct_answer: 7,
+          num_incorrect_answer: 3,
+          diff_flashcard_train: 5,
+          diff_flashcard_learn: 2,
+          num_days_row: 4,
+          most_trained_flash: 1,
+        }
+    ),
+  }));
+
+  render(<App />);
+  fireEvent.click(screen.getByRole('button', { name: /start/i }));
+  fireEvent.click(screen.getByRole('button', { name: 'Log in' }));
+  fireEvent.change(screen.getByLabelText('Login'), { target: { value: 'newuser' } });
+  fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'password123' } });
+  fireEvent.submit(screen.getByRole('form', { name: 'Log in form' }));
+  await screen.findByText('Succesful log in');
+
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+  });
+  fireEvent.click(screen.getByRole('button', { name: 'View statistics' }));
+  for (const label of [
+    'Total number of answers',
+    'Number of correct answers',
+    'Number of incorrect answers',
+    'Different flashcards trained',
+    'Different flashcards learned',
+    'Number of days in row in learning',
+    'Most trained flashcard',
+  ]) {
+    expect(await screen.findByText(label)).toBeInTheDocument();
+  }
+
+  fireEvent.click(screen.getByRole('button', { name: 'Back' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Log out' }));
+  expect(screen.getByRole('status')).toHaveTextContent('Logged out correctly');
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+  });
+  expect(screen.queryByText('Logged out correctly')).not.toBeInTheDocument();
 
   global.fetch = originalFetch;
 });
@@ -259,6 +332,14 @@ test('Admin mode calls the user administration and flashcard upload endpoints', 
   expect(screen.getByRole('button', { name: 'Delete user' })).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Upload flashcards CSV' })).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Update flashcard' })).toBeInTheDocument();
+  expect(
+    within(screen.getByRole('region', { name: 'User-related actions' }))
+      .getByRole('button', { name: 'Update user settings' }),
+  ).toBeInTheDocument();
+  expect(
+    within(screen.getByRole('region', { name: 'Flashcard-related actions' }))
+      .getByRole('button', { name: 'Upload flashcards CSV' }),
+  ).toBeInTheDocument();
 
   fireEvent.click(screen.getByRole('button', { name: 'Update user settings' }));
   fireEvent.change(screen.getByLabelText('Target user ID'), { target: { value: '7' } });
@@ -430,7 +511,7 @@ test('shows session completion prompt and lets the user start a new session or g
 
   await waitFor(() => expect(screen.getByText("Logged in as 'newuser'")).toBeInTheDocument());
   await act(async () => {
-    await new Promise((resolve) => setTimeout(resolve, 3000));
+    await new Promise((resolve) => setTimeout(resolve, 2000));
   });
 
   fireEvent.click(screen.getByRole('button', { name: 'Start learning' }));
@@ -562,7 +643,7 @@ test('learning session starts with new cards and then switches to old cards', as
 
   await waitFor(() => expect(screen.getByText("Logged in as 'newuser'")).toBeInTheDocument());
   await act(async () => {
-    await new Promise((resolve) => setTimeout(resolve, 3000));
+    await new Promise((resolve) => setTimeout(resolve, 2000));
   });
 
   fireEvent.click(screen.getByRole('button', { name: 'Start learning' }));

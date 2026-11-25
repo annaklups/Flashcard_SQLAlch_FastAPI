@@ -29,12 +29,12 @@ DONE - add in db column for flashcards - "Created by" admin/user + login
 DONE - change delete flashcard functionality allow user to delete only his flashcards
 DONE - add additional table for recording each learning sessions:
     datetime, user, session number, flashcard number & wage change
+DONE - create backend logic to show statistics for each user
+    number of correct / wrong answers, total number sessions, total number of different flashcard trained/ learned, number of days in training, most seen flashcard 
+DONE - create frontend to show statistics
+DONE - create scoreboard visible for everyone
 
 Functionality:
-- create backend logic to show statistics for each user
-    number of correct / wrong answers, total number sessions, total number of different flashcard trained/ learned, number of days in training, most seen flashcard 
-- create frontend to show statistics
-- create scoreboard visible for everyone
 
 Additionals / Testing:
 - check if token expiration also works for admins

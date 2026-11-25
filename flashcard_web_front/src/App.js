@@ -1,6 +1,16 @@
 import './App.css';
 import { useEffect, useState } from 'react';
 
+const STATISTICS_LABELS = {
+  total_session: 'Total number of answers',
+  num_correct_answer: 'Number of correct answers',
+  num_incorrect_answer: 'Number of incorrect answers',
+  diff_flashcard_train: 'Different flashcards trained',
+  diff_flashcard_learn: 'Different flashcards learned',
+  num_days_row: 'Number of days in row in learning',
+  most_trained_flash: 'Most trained flashcard',
+};
+
 function App() {
   const [page, setPage] = useState('home');
   const getAdminAuthorization = () => `Bearer ${localStorage.getItem('access_token')}`;
@@ -15,6 +25,7 @@ function App() {
   const [loggedInUser, setLoggedInUser] = useState('');
   const [loggedInUserId, setLoggedInUserId] = useState(null);
   const [loginStatus, setLoginStatus] = useState('');
+  const [logoutStatus, setLogoutStatus] = useState('');
   const [settingsForm, setSettingsForm] = useState({
     flash_amount: 20,
     new_flash_amount: 5,
@@ -70,9 +81,18 @@ function App() {
       return undefined;
     }
 
-    const redirectTimer = setTimeout(() => setPage('menu'), 3000);
+    const redirectTimer = setTimeout(() => setPage('menu'), 2000);
     return () => clearTimeout(redirectTimer);
   }, [loginStatus]);
+
+  useEffect(() => {
+    if (!logoutStatus) {
+      return undefined;
+    }
+
+    const logoutTimer = setTimeout(() => setLogoutStatus(''), 2000);
+    return () => clearTimeout(logoutTimer);
+  }, [logoutStatus]);
 
   const handleCreateUserChange = (event) => {
     const { name, value } = event.target;
@@ -668,54 +688,37 @@ function App() {
         ) : page === 'menu' ? (
           <>
             <h1>Menu</h1>
-            <button
-              className="Menu-button"
-              type="button"
-              onClick={() => {
-                setCreateUserStatus('');
-                setPage('create-user');
-              }}
-            >
-              Create user
-            </button>
-            <button
-              className="Menu-button"
-              type="button"
-              onClick={() => setPage('login')}
-            >
-              Log in
-            </button>
+            {!loggedInUser && (
+              <>
+                <button
+                  className="Menu-button"
+                  type="button"
+                  onClick={() => {
+                    setCreateUserStatus('');
+                    setPage('create-user');
+                  }}
+                >
+                  Create user
+                </button>
+                <button
+                  className="Menu-button"
+                  type="button"
+                  onClick={() => setPage('login')}
+                >
+                  Log in
+                </button>
+              </>
+            )}
             {loggedInUser && (
               <>
                 <button
                   className="Menu-button"
                   type="button"
                   onClick={() => {
-                    setSettingsStatus('');
-                    setPage('settings');
+                    setPage('settings-menu');
                   }}
                 >
-                  Change settings
-                </button>
-                <button
-                  className="Menu-button"
-                  type="button"
-                  onClick={() => {
-                    setPasswordStatus('');
-                    setPage('password');
-                  }}
-                >
-                  Change password
-                </button>
-                <button
-                  className="Menu-button"
-                  type="button"
-                  onClick={() => {
-                    setDeleteUserStatus('');
-                    setPage('delete-user');
-                  }}
-                >
-                  Delete user
+                  Settings
                 </button>
                 <button
                   className="Menu-button"
@@ -757,26 +760,28 @@ function App() {
                   className="Menu-button"
                   type="button"
                   onClick={() => {
+                    localStorage.removeItem('access_token');
+                    setLoggedInUser('');
+                    setLoggedInUserId(null);
+                    setLoginStatus('');
+                    setLogoutStatus('Logged out correctly');
+                  }}
+                >
+                  Log out
+                </button>
+                <button
+                  className="Back-button Admin-mode-button"
+                  type="button"
+                  onClick={() => {
                     setAdminStatus('');
                     setPage('admin-mode');
                   }}
                 >
                   Admin mode
                 </button>
-                <button
-                  className="Menu-button"
-                  type="button"
-                  onClick={() => {
-                    localStorage.removeItem('access_token');
-                    setLoggedInUser('');
-                    setLoggedInUserId(null);
-                    setLoginStatus('');
-                  }}
-                >
-                  Log out
-                </button>
               </>
             )}
+            {logoutStatus && <p role="status">{logoutStatus}</p>}
             <button
               className="Back-button"
               type="button"
@@ -785,52 +790,101 @@ function App() {
               Back
             </button>
           </>
+        ) : page === 'settings-menu' ? (
+          <>
+            <h1>Settings</h1>
+            <button
+              className="Menu-button"
+              type="button"
+              onClick={() => {
+                setSettingsStatus('');
+                setPage('settings');
+              }}
+            >
+              Change settings
+            </button>
+            <button
+              className="Menu-button"
+              type="button"
+              onClick={() => {
+                setPasswordStatus('');
+                setPage('password');
+              }}
+            >
+              Change password
+            </button>
+            <button
+              className="Menu-button"
+              type="button"
+              onClick={() => {
+                setDeleteUserStatus('');
+                setPage('delete-user');
+              }}
+            >
+              Delete user
+            </button>
+            <button
+              className="Back-button"
+              type="button"
+              onClick={() => setPage('menu')}
+            >
+              Back
+            </button>
+          </>
         ) : page === 'admin-mode' ? (
               <>
                 <h1>Admin mode</h1>
-                <button className="Menu-button" type="button" onClick={() => {
-                  setAdminStatus('');
-                  setPage('admin-settings');
-                }}>
-                  Update user settings
-                </button>
-                <button className="Menu-button" type="button" onClick={() => {
-                  setAdminStatus('');
-                  setPage('admin-password');
-                }}>
-                  Update user password
-                </button>
-                <button className="Menu-button" type="button" onClick={() => {
-                  setAdminStatus('');
-                  setPage('admin-role');
-                }}>
-                  Promote user to admin
-                </button>
-                <button className="Menu-button" type="button" onClick={() => {
-                  setAdminStatus('');
-                  setPage('admin-delete');
-                }}>
-                  Delete user
-                </button>
-                <button className="Menu-button" type="button" onClick={() => {
-                  setAdminStatus('');
-                  setPage('admin-upload');
-                }}>
-                  Upload flashcards CSV
-                </button>
-                <button className="Menu-button" type="button" onClick={() => {
-                  setAdminStatus('');
-                  setPage('admin-flashcard');
-                }}>
-                  Update flashcard
-                </button>
-                <button className="Menu-button" type="button" onClick={() => {
-                  setAdminStatus('');
-                  setAdminFlashcardForm((currentForm) => ({ ...currentForm, flash_num: '' }));
-                  setPage('admin-delete-flashcard');
-                }}>
-                  Delete flashcard
-                </button>
+                <div className="Admin-menu-grid">
+                  <section className="Admin-menu-column" aria-label="User-related actions">
+                    <h2 className="Admin-menu-heading">Users</h2>
+                    <button className="Menu-button" type="button" onClick={() => {
+                      setAdminStatus('');
+                      setPage('admin-settings');
+                    }}>
+                      Update user settings
+                    </button>
+                    <button className="Menu-button" type="button" onClick={() => {
+                      setAdminStatus('');
+                      setPage('admin-password');
+                    }}>
+                      Update user password
+                    </button>
+                    <button className="Menu-button" type="button" onClick={() => {
+                      setAdminStatus('');
+                      setPage('admin-role');
+                    }}>
+                      Promote user to admin
+                    </button>
+                    <button className="Menu-button" type="button" onClick={() => {
+                      setAdminStatus('');
+                      setPage('admin-delete');
+                    }}>
+                      Delete user
+                    </button>
+                  </section>
+                  <section className="Admin-menu-column" aria-label="Flashcard-related actions">
+                    <h2 className="Admin-menu-heading">Flashcards</h2>
+                    <button className="Menu-button" type="button" onClick={() => {
+                      setAdminStatus('');
+                      setPage('admin-upload');
+                    }}>
+                      Upload flashcards CSV
+                    </button>
+                    <button className="Menu-button" type="button" onClick={() => {
+                      setAdminStatus('');
+                      setPage('admin-flashcard');
+                    }}>
+                      Update flashcard
+                    </button>
+                    <button className="Menu-button" type="button" onClick={() => {
+                      setAdminStatus('');
+                      setAdminFlashcardForm((currentForm) => ({ ...currentForm, flash_num: '' }));
+                      setPage('admin-delete-flashcard');
+                    }}>
+                      Delete flashcard
+                    </button>
+                  </section>
+                </div>
                 <button
                   className="Back-button"
                   type="button"
@@ -1105,9 +1159,9 @@ function App() {
             {statisticsStatus && <p role="status">{statisticsStatus}</p>}
             {statistics && (
               <dl className="Statistics-list">
-                {Object.entries(statistics).map(([label, value]) => (
-                  <div key={label}>
-                    <dt>{label}</dt>
+                {Object.entries(statistics).map(([key, value]) => (
+                  <div key={key}>
+                    <dt>{STATISTICS_LABELS[key] || key}</dt>
                     <dd>{String(value)}</dd>
                   </div>
                 ))}
@@ -1233,7 +1287,7 @@ function App() {
             <button
               className="Back-button"
               type="button"
-              onClick={() => setPage('menu')}
+              onClick={() => setPage('settings-menu')}
             >
               Back
             </button>
@@ -1289,7 +1343,7 @@ function App() {
             <button
               className="Back-button"
               type="button"
-              onClick={() => setPage('menu')}
+              onClick={() => setPage('settings-menu')}
             >
               Back
             </button>
@@ -1335,7 +1389,7 @@ function App() {
             <button
               className="Back-button"
               type="button"
-              onClick={() => setPage('menu')}
+              onClick={() => setPage('settings-menu')}
             >
               Back
             </button>
